@@ -15,6 +15,7 @@ using namespace glm;
 using namespace std;
 
 const float PI = 3.14159265f;
+const float SCALE_FACTOR = 0.1f;
 
 
 //----------------------------------------------------------------------------------------
@@ -199,18 +200,19 @@ void A0::guiLogic()
 
 	ImGui::Begin("Shape Properties", &showDebugWindow, ImVec2(100,100), opacity,
 			windowFlags);
-		// Retrieve red color component from slider and store in the first element of
-		// m_shape_color.
-		ImGui::SliderFloat("Red Channel", &m_shape_color.r, 0.0f, 1.0f);
-
-
-		// Add more gui elements here here ...
-
-
 		// Create Button, and check if it was clicked:
 		if( ImGui::Button( "Quit Application" ) ) {
 			glfwSetWindowShouldClose(m_window, GL_TRUE);
 		}
+		
+		// Retrieve red color component from slider and store in the first element of
+		// m_shape_color.
+		ImGui::SliderFloat("Red Channel", &m_shape_color.r, 0.0f, 1.0f);
+		ImGui::SliderFloat("Green Channel", &m_shape_color.g, 0.0f, 1.0f);
+		ImGui::SliderFloat("Blue Channel", &m_shape_color.b, 0.0f, 1.0f);
+
+		// Rotation slider from 0 to 360 degrees
+		ImGui::SliderAngle("Rotation", &m_shape_rotation, 0.0f, 360.0f);
 
 		ImGui::Text( "Framerate: %.1f FPS", ImGui::GetIO().Framerate );
 
@@ -328,6 +330,7 @@ bool A0::windowResizeEvent(int width, int height) {
 	return eventHandled;
 }
 
+
 //----------------------------------------------------------------------------------------
 /*
  * Event handler.  Handles key input events.
@@ -339,14 +342,34 @@ bool A0::keyInputEvent(int key, int action, int mods) {
 		if (key == GLFW_KEY_EQUAL) {
 			cout << "+ key pressed" << endl;
 
-			// TODO - increase shape size.
+			m_shape_size += SCALE_FACTOR;
 
 			eventHandled = true;
 		}
 		if (key == GLFW_KEY_MINUS) {
 			cout << "- key pressed" << endl;
 
-			// TODO - decrease shape size.
+			m_shape_size -= SCALE_FACTOR;
+
+			eventHandled = true;
+		}
+		if (key == GLFW_KEY_Q) {
+			cout << "q key pressed" << endl;
+
+			glfwSetWindowShouldClose(m_window, GL_TRUE);
+			
+			eventHandled = true;
+		}
+
+		if (key == GLFW_KEY_R) {
+			cout << "r key pressed" << endl;
+
+			m_shape_color = glm::vec3(1.0f, 1.0f, 1.0f);
+			m_shape_translation = vec2(0.0f);
+			m_shape_size = 1.0f;
+			m_shape_rotation = 0.0f;
+			m_mouse_GL_coordinate = dvec2(0.0);
+			m_mouseButtonActive = false;
 
 			eventHandled = true;
 		}

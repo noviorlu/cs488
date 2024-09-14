@@ -1,0 +1,45 @@
+# README
+
+## Compilation
+
+To compile and run the program, use the following commands:
+
+```sh
+premake4 gmake && make && ./A0
+```
+
+This will compile the program using `premake4` and `make`, and then run the resulting OpenGL program. Ensure you are in the root directory of the project when running these commands.
+
+### Lab Computer
+
+The assignment was completed on the MC3007 lab computer. If you encounter any issues running the program, please try it on in-lab computer as a failsafe.
+
+## Manual
+
+### Additional Features and Assumptions
+
+- **Quit Application**: The Quit button is moved to the top of the Shape Properties palette. You can also quit the program using the `Q` key.
+- **Color Control**: Added two new sliders for Green and Blue channels to control the RGB color of the triangle. Together with the existing Red slider, you can fully control the triangle's color.
+- **Rotation Control**: Added a slider to control the rotation angle of the triangle. This slider allows rotation through a full 360 degrees.
+- **Scaling**: Added keyboard shortcuts to scale the triangle. Use the `-` (minus) key to scale down and the `+` (plus) key to scale up by a constant factor.
+- **Reset Button**: Added a Reset button between the Quit button and the sliders. This button resets the triangle to its original state (color, scale, rotation, position). The `R` key also serves as a shortcut for this action.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
