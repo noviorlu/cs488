@@ -35,6 +35,9 @@ private:
 
 	void updateView();
 
+	void generateMaze();
+	void drawMaze();
+
 	// Fields related to the shader and uniforms.
 	ShaderProgram m_shader;
 	GLint P_uni; // Uniform location for Projection matrix.
@@ -49,6 +52,12 @@ private:
 	// Fields related to cube geometry.
 	GLuint m_cube_vao; // Vertex Array Object
 	GLuint m_cube_ibo; // Index Buffer Object
+
+	// Fields related to maze geometry.
+	int m_idx_size;
+	GLuint m_maze_vao = 0; // Vertex Array Object
+	GLuint m_maze_vbo; // Vertex Buffer Object
+	GLuint m_maze_ibo; // Index Buffer Object
 
 	float scaleFactor = 1.0f;
 

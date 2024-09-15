@@ -47,12 +47,13 @@ void A1::init()
 	cout << "Random number seed = " << rseed << endl;
 	
 
-	// DELETE FROM HERE...
-	Maze m(DIM);
-	m.digMaze();
-	m.printMaze();
-	// ...TO HERE
-	
+	// // DELETE FROM HERE...
+	// Maze m(DIM);
+	// m.digMaze();
+	// m.printMaze();
+	// // ...TO HERE
+	generateMaze();
+
 	// Set the background colour.
 	glClearColor( 0.3, 0.5, 0.7, 1.0 );
 
@@ -194,6 +195,47 @@ void A1::initCube(){
     glBindVertexArray(0);
 }
 
+void A1::generateMaze(){
+	Maze m(DIM);
+	m.digMaze();
+	m.printMaze();
+
+	m.generateGeometry();
+	auto vertices = m.getVertices();
+	auto triangles = m.getTriangles();
+
+	m_idx_size = triangles.size() * 3;
+
+	// Cleanup previous buffers
+	// do safety check if buffers are already created
+	if (m_maze_vao != 0) {
+		glDeleteVertexArrays(1, &m_maze_vao);
+		glDeleteBuffers(1, &m_maze_vbo);
+		glDeleteBuffers(1, &m_maze_ibo);
+	}
+
+	glGenVertexArrays(1, &m_maze_vao);
+	glBindVertexArray(m_maze_vao);
+
+	glGenBuffers(1, &m_maze_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, m_maze_vbo);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
+
+	glGenBuffers(1, &m_maze_ibo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_maze_ibo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangles.size() * sizeof(glm::uvec3), triangles.data(), GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+	glEnableVertexAttribArray(0);
+}
+
+void A1::drawMaze(){
+	// Draw the maze
+	glBindVertexArray(m_maze_vao);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_maze_ibo);
+	glDrawElements(GL_TRIANGLES, m_idx_size, GL_UNSIGNED_INT, 0);
+}
+
 void A1::updateView(){
 	float radianTheta = glm::radians(theta);
 	float radianPhi = glm::radians(phi);
@@ -308,11 +350,14 @@ void A1::draw()
 
 		// Draw the cubes
 		auto scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, scaleFactor, 1.0f));
-		glBindVertexArray(m_cube_vao);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_cube_ibo);
+		// glBindVertexArray(m_cube_vao);
+		// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_cube_ibo);
 		glUniform3f( col_uni, 1, 0, 0);
 		glUniformMatrix4fv(M_uni, 1, GL_FALSE, value_ptr(W * scaleMatrix));
-		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+		// glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+		// Draw the maze
+		drawMaze();
 
 
 		// Highlight the active square.
@@ -449,10 +494,10 @@ bool A1::keyInputEvent(int key, int action, int mods) {
 		
 		// Space and Backspace to change scaleFactor
 		if( key == GLFW_KEY_SPACE ) {
-			scaleFactor += 1f;
+			scaleFactor += 1.0f;
 			if (scaleFactor > 10.0f) scaleFactor = 10.0f;
 		} else if( key == GLFW_KEY_BACKSPACE ) {
-			scaleFactor -= 1f;
+			scaleFactor -= 1.0f;
 			if (scaleFactor < 0.0f) scaleFactor = 0.01f;
 		}
 	}

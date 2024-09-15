@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cstdio>
 
+#include <iostream>
+
 #include "maze.hpp"
 
 Maze::Maze( size_t D )
@@ -88,6 +90,102 @@ void Maze::printMaze() {
 	}
 }
 
+std::vector<glm::vec3> Maze::getVertices(){
+	// sort by the second element of the unordered map
+	std::vector<glm::vec3> vertices;
+	
+	std::vector<std::pair<glm::vec3, int>> sortedVertices(m_Vertices.begin(), m_Vertices.end());
+	std::sort(sortedVertices.begin(), sortedVertices.end(), [](const std::pair<glm::vec3, int>& a, const std::pair<glm::vec3, int>& b) {
+		return a.second < b.second;
+	});
+
+	for (const auto& vertex : sortedVertices) {
+		vertices.push_back(vertex.first);
+	}
+
+	return vertices;
+}
+
+void Maze::generateGeometry(){
+	// concat m_values with 0s on the border
+	int** m_values_ext = new int*[m_dim+2];
+	for (int i = 0; i < m_dim + 2; ++i) {
+		m_values_ext[i] = new int[m_dim + 2];
+		for (int j = 0; j < m_dim + 2; ++j) {
+			if (i == 0 || j == 0 || i == m_dim + 1 || j == m_dim + 1) {
+				m_values_ext[i][j] = 0;
+			} else {
+				m_values_ext[i][j] = m_values[(i - 1) * m_dim + (j - 1)];
+			}
+		}
+	}
+
+	int i, j;
+	for (i=1; i <= m_dim+1; i++) {
+		// for row walls
+		for (j=1; j <= m_dim+1; ) {
+			int row = j;
+			while (j <= m_dim && (m_values_ext[i][j] ^ m_values_ext[i-1][j]) == 1) {
+				j++;
+			}
+
+			if(j - row > 0){
+				// two points for the edge then extend to wall
+				int x = i - 1;
+				int z1 = row - 1;
+				int z2 = j - 1;
+				int idx = m_Vertices.size();
+				auto v1 = glm::vec3(x, 0, z1);
+				auto v2 = glm::vec3(x, 0, z2);
+				auto v3 = glm::vec3(x, 1, z1);
+				auto v4 = glm::vec3(x, 1, z2);
+
+				if(m_Vertices.find(v1) == m_Vertices.end()) m_Vertices[v1] = idx++;
+				if(m_Vertices.find(v2) == m_Vertices.end()) m_Vertices[v2] = idx++;
+				if(m_Vertices.find(v3) == m_Vertices.end()) m_Vertices[v3] = idx++;
+				if(m_Vertices.find(v4) == m_Vertices.end()) m_Vertices[v4] = idx++;
+
+				m_triangles.push_back(glm::uvec3(m_Vertices[v1], m_Vertices[v2], m_Vertices[v3]));
+				m_triangles.push_back(glm::uvec3(m_Vertices[v2], m_Vertices[v4], m_Vertices[v3]));
+			}
+			else j++;
+		}
+		// for column walls
+		for(j=1; j <= m_dim+1; ){
+			int col = j;
+			while(j <= m_dim && (m_values_ext[j][i] ^ m_values_ext[j][i-1]) == 1){
+				j++;
+			}
+
+			if(j - col > 0){
+				// two points for the edge then extend to wall
+				int x1 = col - 1;
+				int x2 = j - 1;
+				int z = i - 1;
+				int idx = m_Vertices.size();
+				auto v1 = glm::vec3(x1, 0, z);
+				auto v2 = glm::vec3(x2, 0, z);
+				auto v3 = glm::vec3(x1, 1, z);
+				auto v4 = glm::vec3(x2, 1, z);
+
+				if(m_Vertices.find(v1) == m_Vertices.end()) m_Vertices[v1] = idx++;
+				if(m_Vertices.find(v2) == m_Vertices.end()) m_Vertices[v2] = idx++;
+				if(m_Vertices.find(v3) == m_Vertices.end()) m_Vertices[v3] = idx++;
+				if(m_Vertices.find(v4) == m_Vertices.end()) m_Vertices[v4] = idx++;
+
+				m_triangles.push_back(glm::uvec3(m_Vertices[v1], m_Vertices[v2], m_Vertices[v3]));
+				m_triangles.push_back(glm::uvec3(m_Vertices[v2], m_Vertices[v4], m_Vertices[v3]));
+			}
+			else j++;
+		}
+	}
+
+	// free m_values_ext
+	for (int i = 0; i < m_dim + 2; ++i) {
+		delete[] m_values_ext[i];
+	}
+	delete[] m_values_ext;
+}
 
 void Maze::recDigMaze(int r, int c) {
 	int* p;
