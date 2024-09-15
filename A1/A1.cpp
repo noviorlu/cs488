@@ -71,13 +71,20 @@ void A1::init()
 	col_uni = m_shader.getUniformLocation( "colour" );
 
 	initGrid();
+	initCube();
 
 	// Set up initial view and projection matrices (need to do this here,
 	// since it depends on the GLFW window being set up correctly).
-	view = glm::lookAt( 
-		glm::vec3( 0.0f, 2.*float(DIM)*2.0*M_SQRT1_2, float(DIM)*2.0*M_SQRT1_2 ),
-		glm::vec3( 0.0f, 0.0f, 0.0f ),
-		glm::vec3( 0.0f, 1.0f, 0.0f ) );
+	// glm::vec3 eye = glm::vec3( 0.0f, 2.*float(DIM)*2.0*M_SQRT1_2, float(DIM)*2.0*M_SQRT1_2 );
+	// view = glm::lookAt( 
+	// 	eye,
+	// 	glm::vec3( 0.0f, 0.0f, 0.0f ),
+	// 	glm::vec3( 0.0f, 1.0f, 0.0f ) );
+	theta = 90.0;
+	phi = 26.565;
+	r = sqrt(10) * DIM;
+
+	updateView();
 
 	proj = glm::perspective( 
 		glm::radians( 30.0f ),
@@ -136,6 +143,68 @@ void A1::initGrid()
 	CHECK_GL_ERRORS;
 }
 
+void A1::initCube(){
+	float cubeVertices[] = {
+		0.0f, 0.0f, 0.0f, // 0
+		1.0f, 0.0f, 0.0f, // 1
+		1.0f, 1.0f, 0.0f, // 2
+		0.0f, 1.0f, 0.0f, // 3
+		0.0f, 0.0f, 1.0f, // 4
+		1.0f, 0.0f, 1.0f, // 5
+		1.0f, 1.0f, 1.0f, // 6
+		0.0f, 1.0f, 1.0f  // 7
+	};
+
+	unsigned int cubeIndices[] = {
+		// Front face
+		0, 1, 2,
+		2, 3, 0,
+		// Back face
+		4, 5, 6,
+		6, 7, 4,
+		// Left face
+		0, 3, 7,
+		7, 4, 0,
+		// Right face
+		1, 5, 6,
+		6, 2, 1,
+		// Top face
+		3, 2, 6,
+		6, 7, 3,
+		// Bottom face
+		0, 4, 5,
+		5, 1, 0
+	};
+
+    glGenVertexArrays(1, &m_cube_vao);
+    glBindVertexArray(m_cube_vao);
+
+	GLuint m_cube_vbo;
+    glGenBuffers(1, &m_cube_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, m_cube_vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
+
+    glGenBuffers(1, &m_cube_ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_cube_ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cubeIndices), cubeIndices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    
+	glEnableVertexAttribArray(0);
+    glBindVertexArray(0);
+}
+
+void A1::updateView(){
+	float radianTheta = glm::radians(theta);
+	float radianPhi = glm::radians(phi);
+
+	float x = r * sin(radianPhi) * cos(radianTheta);
+	float y = r * cos(radianPhi);
+	float z = r * sin(radianPhi) * sin(radianTheta);
+
+	view = glm::lookAt(glm::vec3(x, y, z), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+}
+
 //----------------------------------------------------------------------------------------
 /*
  * Called once per frame, before guiLogic().
@@ -184,6 +253,17 @@ void A1::guiLogic()
 		}
 		ImGui::PopID();
 
+		if(ImGui::SliderFloat("Theta", &theta, -180.0f, 180.0f)){
+			updateView();
+		}
+		if(ImGui::SliderFloat("Phi", &phi, 1.0f, 90.0f)){
+			updateView();
+		}
+		if(ImGui::SliderFloat("Radius", &r, 1.0f, 100.0f)){
+			updateView();
+		}
+		ImGui::SliderFloat("Scale Factor", &scaleFactor, 0.5f, 5.0f);
+
 /*
 		// For convenience, you can uncomment this to show ImGui's massive
 		// demonstration window right in your application.  Very handy for
@@ -193,6 +273,7 @@ void A1::guiLogic()
 			showTestWindow = !showTestWindow;
 		}
 */
+		// camera angle control
 
 		ImGui::Text( "Framerate: %.1f FPS", ImGui::GetIO().Framerate );
 
@@ -226,6 +307,14 @@ void A1::draw()
 		glDrawArrays( GL_LINES, 0, (3+DIM)*4 );
 
 		// Draw the cubes
+		auto scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, scaleFactor, 1.0f));
+		glBindVertexArray(m_cube_vao);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_cube_ibo);
+		glUniform3f( col_uni, 1, 0, 0);
+		glUniformMatrix4fv(M_uni, 1, GL_FALSE, value_ptr(W * scaleMatrix));
+		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+
 		// Highlight the active square.
 	m_shader.disable();
 
@@ -270,6 +359,27 @@ bool A1::mouseMoveEvent(double xPos, double yPos)
 		// Probably need some instance variables to track the current
 		// rotation amount, and maybe the previous X position (so 
 		// that you can rotate relative to the *change* in X.
+		if(LeftMousePressed){
+			float sensitivity = 0.004 * r;
+			float deltaX = (xPos - lastX) * sensitivity;
+			float deltaY = (yPos - lastY) * sensitivity;
+
+			theta += deltaX;
+			phi -= deltaY;
+
+			// Clamp phi between 0 and 90
+			if (phi > 90.0f) phi = 90.0f;
+			else if (phi < 1.0f) phi = 1.0f;
+
+			// Clamp theta between -180 and 180
+			if (theta < -180.0f) theta = 180.0f;
+			else if (theta > 180.0f) theta = -180.0f;
+
+			updateView();
+
+			lastX = xPos;
+			lastY = yPos;
+		}
 	}
 
 	return eventHandled;
@@ -285,6 +395,14 @@ bool A1::mouseButtonInputEvent(int button, int actions, int mods) {
 	if (!ImGui::IsMouseHoveringAnyWindow()) {
 		// The user clicked in the window.  If it's the left
 		// mouse button, initiate a rotation.
+		if(button == GLFW_MOUSE_BUTTON_LEFT) {
+			if(actions == GLFW_PRESS) {
+				LeftMousePressed = true;
+				glfwGetCursorPos(m_window, &lastX, &lastY);
+			} else {
+				LeftMousePressed = false;
+			}
+		}
 	}
 
 	return eventHandled;
@@ -298,6 +416,10 @@ bool A1::mouseScrollEvent(double xOffSet, double yOffSet) {
 	bool eventHandled(false);
 
 	// Zoom in or out.
+	r -= yOffSet;
+	if (r < 10.0f) r = 10.0f;
+	else if (r > 100.0f) r = 100.0f;
+	updateView();
 
 	return eventHandled;
 }
@@ -324,6 +446,15 @@ bool A1::keyInputEvent(int key, int action, int mods) {
 	// Fill in with event handling code...
 	if( action == GLFW_PRESS ) {
 		// Respond to some key events.
+		
+		// Space and Backspace to change scaleFactor
+		if( key == GLFW_KEY_SPACE ) {
+			scaleFactor += 1f;
+			if (scaleFactor > 10.0f) scaleFactor = 10.0f;
+		} else if( key == GLFW_KEY_BACKSPACE ) {
+			scaleFactor -= 1f;
+			if (scaleFactor < 0.0f) scaleFactor = 0.01f;
+		}
 	}
 
 	return eventHandled;
