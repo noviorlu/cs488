@@ -21,7 +21,7 @@ static const size_t DIM = 16;
 //----------------------------------------------------------------------------------------
 // Constructor
 A1::A1()
-	: current_col( 0 )
+	: current_col( 0 ), m(DIM)
 {
 	colour[0] = 0.0f;
 	colour[1] = 0.0f;
@@ -31,7 +31,9 @@ A1::A1()
 //----------------------------------------------------------------------------------------
 // Destructor
 A1::~A1()
-{}
+{
+	// if(m_maze) delete m_maze;
+}
 
 //----------------------------------------------------------------------------------------
 /*
@@ -52,7 +54,7 @@ void A1::init()
 	// m.digMaze();
 	// m.printMaze();
 	// // ...TO HERE
-	generateMaze();
+	randomMaze();
 
 	// Set the background colour.
 	glClearColor( 0.3, 0.5, 0.7, 1.0 );
@@ -73,6 +75,7 @@ void A1::init()
 
 	initGrid();
 	initCube();
+	generateMaze();
 
 	// Set up initial view and projection matrices (need to do this here,
 	// since it depends on the GLFW window being set up correctly).
@@ -84,7 +87,6 @@ void A1::init()
 	theta = 90.0;
 	phi = 26.565;
 	r = sqrt(10) * DIM;
-
 	updateView();
 
 	proj = glm::perspective( 
@@ -195,11 +197,13 @@ void A1::initCube(){
     glBindVertexArray(0);
 }
 
-void A1::generateMaze(){
-	Maze m(DIM);
+void A1::randomMaze(){
 	m.digMaze();
 	m.printMaze();
+	A1::generateMaze();
+}
 
+void A1::generateMaze(){
 	m.generateGeometry();
 	auto vertices = m.getVertices();
 	auto triangles = m.getTriangles();
@@ -254,6 +258,8 @@ void A1::updateView(){
 void A1::appLogic()
 {
 	// Place per frame, application logic here ...
+
+	// avatar movement, animation stuff
 }
 
 //----------------------------------------------------------------------------------------
@@ -295,6 +301,8 @@ void A1::guiLogic()
 		}
 		ImGui::PopID();
 
+		// camera angle control window
+		ImGui::Text("Camera Control");
 		if(ImGui::SliderFloat("Theta", &theta, -180.0f, 180.0f)){
 			updateView();
 		}
@@ -315,8 +323,6 @@ void A1::guiLogic()
 			showTestWindow = !showTestWindow;
 		}
 */
-		// camera angle control
-
 		ImGui::Text( "Framerate: %.1f FPS", ImGui::GetIO().Framerate );
 
 	ImGui::End();
@@ -354,7 +360,6 @@ void A1::draw()
 		// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_cube_ibo);
 		glUniform3f( col_uni, 1, 0, 0);
 		glUniformMatrix4fv(M_uni, 1, GL_FALSE, value_ptr(W * scaleMatrix));
-		// glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
 		// Draw the maze
 		drawMaze();
@@ -490,8 +495,6 @@ bool A1::keyInputEvent(int key, int action, int mods) {
 
 	// Fill in with event handling code...
 	if( action == GLFW_PRESS ) {
-		// Respond to some key events.
-		
 		// Space and Backspace to change scaleFactor
 		if( key == GLFW_KEY_SPACE ) {
 			scaleFactor += 1.0f;

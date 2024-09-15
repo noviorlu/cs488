@@ -25,12 +25,16 @@ public:
 
 	void generateGeometry();
     std::vector<glm::vec3> getVertices();
-    void NewFunction();
-    std::vector<glm::uvec3> getTriangles(){ return m_triangles; }
+    std::vector<glm::uvec3> getTriangles();
+
+	glm::vec2 getStart() const { return m_start; }
+	glm::vec2 getEnd() const { return m_end; }
 
 private:
 	size_t m_dim;
 	int *m_values;
+	glm::vec2 m_start;
+	glm::vec2 m_end;
 	void recDigMaze(int r, int c);
 	int numNeighbors(int r, int c);
 

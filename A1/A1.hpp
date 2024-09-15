@@ -32,6 +32,7 @@ protected:
 private:
 	void initGrid();
 	void initCube();
+	void randomMaze();
 
 	void updateView();
 
@@ -54,12 +55,12 @@ private:
 	GLuint m_cube_ibo; // Index Buffer Object
 
 	// Fields related to maze geometry.
-	int m_idx_size;
+	Maze m;
+	int m_idx_size; // maze triangle index size
 	GLuint m_maze_vao = 0; // Vertex Array Object
 	GLuint m_maze_vbo; // Vertex Buffer Object
 	GLuint m_maze_ibo; // Index Buffer Object
-
-	float scaleFactor = 1.0f;
+	float scaleFactor = 1.0f; // Maze's scale factor
 
 	// Matrices controlling the camera and projection.
 	glm::mat4 proj;

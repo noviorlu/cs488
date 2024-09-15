@@ -88,6 +88,10 @@ void Maze::printMaze() {
 		}
 		printf("\n");
 	}
+
+	// print start and end position
+	printf("Start: %d %d\n", (int)m_start.x, (int)m_start.y);
+	printf("End: %d %d\n", (int)m_end.x, (int)m_end.y);
 }
 
 std::vector<glm::vec3> Maze::getVertices(){
@@ -102,8 +106,14 @@ std::vector<glm::vec3> Maze::getVertices(){
 	for (const auto& vertex : sortedVertices) {
 		vertices.push_back(vertex.first);
 	}
-
+	m_Vertices.clear();
 	return vertices;
+}
+
+std::vector<glm::uvec3> Maze::getTriangles(){
+	std::vector<glm::uvec3> triangles = m_triangles;
+	m_triangles.clear();
+	return triangles;
 }
 
 void Maze::generateGeometry(){
@@ -167,6 +177,37 @@ void Maze::generateGeometry(){
 				auto v2 = glm::vec3(x2, 0, z);
 				auto v3 = glm::vec3(x1, 1, z);
 				auto v4 = glm::vec3(x2, 1, z);
+
+				if(m_Vertices.find(v1) == m_Vertices.end()) m_Vertices[v1] = idx++;
+				if(m_Vertices.find(v2) == m_Vertices.end()) m_Vertices[v2] = idx++;
+				if(m_Vertices.find(v3) == m_Vertices.end()) m_Vertices[v3] = idx++;
+				if(m_Vertices.find(v4) == m_Vertices.end()) m_Vertices[v4] = idx++;
+
+				m_triangles.push_back(glm::uvec3(m_Vertices[v1], m_Vertices[v2], m_Vertices[v3]));
+				m_triangles.push_back(glm::uvec3(m_Vertices[v2], m_Vertices[v4], m_Vertices[v3]));
+			}
+			else j++;
+		}
+	}
+
+	// iterate to add the top and bottom walls
+	for(i=1; i<= m_dim; i++){
+		for(j=1; j<= m_dim;){
+			int row = j;
+			while(j <= m_dim && m_values_ext[i][j] == 1){
+				j++;
+			}
+			if(j - row > 0){
+				// create the bottom wall
+				int x1 = i - 1;
+				int x2 = i;
+				int z1 = row - 1;
+				int z2 = j - 1;
+				int idx = m_Vertices.size();
+				auto v1 = glm::vec3(x1, 1, z1);
+				auto v2 = glm::vec3(x2, 1, z1);
+				auto v3 = glm::vec3(x1, 1, z2);
+				auto v4 = glm::vec3(x2, 1, z2);
 
 				if(m_Vertices.find(v1) == m_Vertices.end()) m_Vertices[v1] = idx++;
 				if(m_Vertices.find(v2) == m_Vertices.end()) m_Vertices[v2] = idx++;
@@ -274,11 +315,13 @@ void Maze::digMaze()
 	s=random()%(m_dim-2)+1;
 	setValue(0,s,0);
 	setValue(1,s,0);
+	m_start = glm::vec2(0,s);
 	// find an end location
 	do {
 		s=rand()%(m_dim-2)+1;
 		if ( getValue(m_dim-2,s)==0 ) {
 			setValue(m_dim-1,s,0);
+			m_end = glm::vec2(m_dim-1,s);
 		}
 	} while (getValue(m_dim-1,s)==1);
 
