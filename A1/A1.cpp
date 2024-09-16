@@ -48,14 +48,6 @@ void A1::init()
 	// same random numbers
 	cout << "Random number seed = " << rseed << endl;
 	
-
-	// // DELETE FROM HERE...
-	// Maze m(DIM);
-	// m.digMaze();
-	// m.printMaze();
-	// // ...TO HERE
-	randomMaze();
-
 	// Set the background colour.
 	glClearColor( 0.3, 0.5, 0.7, 1.0 );
 
@@ -75,24 +67,37 @@ void A1::init()
 
 	initGrid();
 	initCube();
-	generateMaze();
-
+	initSphere();
+	
 	// Set up initial view and projection matrices (need to do this here,
 	// since it depends on the GLFW window being set up correctly).
-	// glm::vec3 eye = glm::vec3( 0.0f, 2.*float(DIM)*2.0*M_SQRT1_2, float(DIM)*2.0*M_SQRT1_2 );
-	// view = glm::lookAt( 
-	// 	eye,
-	// 	glm::vec3( 0.0f, 0.0f, 0.0f ),
-	// 	glm::vec3( 0.0f, 1.0f, 0.0f ) );
+	resetParameters();
+	proj = glm::perspective( 
+		glm::radians( 30.0f ),
+		float( m_framebufferWidth ) / float( m_framebufferHeight ),
+		1.0f, 1000.0f );
+}
+
+void A1::resetParameters(){
 	theta = 90.0;
 	phi = 26.565;
 	r = sqrt(10) * DIM;
 	updateView();
 
-	proj = glm::perspective( 
-		glm::radians( 30.0f ),
-		float( m_framebufferWidth ) / float( m_framebufferHeight ),
-		1.0f, 1000.0f );
+	maze_colour[0] = 0.4f;
+	maze_colour[1] = 0.4f;
+	maze_colour[2] = 0.4f;
+
+	floor_colour[0] = 0.2f;
+	floor_colour[1] = 0.2f;
+	floor_colour[2] = 0.2f;
+
+	avatar_colour[0] = 0.9f;
+	avatar_colour[1] = 0.9f;
+	avatar_colour[2] = 0.9f;
+
+	avatar_pos = glm::vec3(-1, 0, -1);
+	runState = false;
 }
 
 void A1::initGrid()
@@ -142,6 +147,35 @@ void A1::initGrid()
 
 	// OpenGL has the buffer now, there's no need for us to keep a copy.
 	delete [] verts;
+
+	// generate floor
+	float floorVertices[] = {
+		0.0f, 0.0f, 0.0f, // 0
+		DIM, 0.0f, 0.0f, // 1
+		DIM, 0.0f, DIM, // 2
+		0.0f, 0.0f, DIM  // 3
+	};
+	
+	unsigned int floorIndices[] = {
+		0, 1, 2,
+		2, 3, 0
+	};
+
+	glGenVertexArrays(1, &m_floor_vao);
+	glBindVertexArray(m_floor_vao);
+
+	GLuint m_floor_vbo;
+	glGenBuffers(1, &m_floor_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, m_floor_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(floorVertices), floorVertices, GL_STATIC_DRAW);
+
+	glGenBuffers(1, &m_floor_ibo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_floor_ibo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(floorIndices), floorIndices, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+	glBindVertexArray(0);
 
 	CHECK_GL_ERRORS;
 }
@@ -197,10 +231,87 @@ void A1::initCube(){
     glBindVertexArray(0);
 }
 
+void A1::initSphere(){
+	// Define sphere parameters
+    float radius = 1.0f;
+    unsigned int longitudeSegments = 50; // Controls the horizontal segments
+    unsigned int latitudeSegments = 50;  // Controls the vertical segments
+
+    // Create vertex and index buffers
+    std::vector<float> vertices;
+    std::vector<unsigned int> indices;
+    createSphere(vertices, indices, radius, longitudeSegments, latitudeSegments);
+	m_sphere_idx_size = indices.size();
+
+    // Create and bind a m_sphere_vao, VBO, and m_sphere_ibo
+    unsigned int VBO;
+    glGenVertexArrays(1, &m_sphere_vao);
+    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &m_sphere_ibo);
+
+    glBindVertexArray(m_sphere_vao);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_sphere_ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+
+    // Specify the layout of the vertex data (Position)
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+}
+
+void A1::createSphere(std::vector<float>& vertices, std::vector<unsigned int>& indices, float radius, unsigned int longitudeSegments, unsigned int latitudeSegments) {
+    for (unsigned int lat = 0; lat <= latitudeSegments; ++lat) {
+        float theta = lat * M_PI / latitudeSegments;
+        float sinTheta = std::sin(theta);
+        float cosTheta = std::cos(theta);
+
+        for (unsigned int lon = 0; lon <= longitudeSegments; ++lon) {
+            float phi = lon * 2.0f * M_PI / longitudeSegments;
+            float sinPhi = std::sin(phi);
+            float cosPhi = std::cos(phi);
+
+            // Vertex position (x, y, z)
+            float x = cosPhi * sinTheta;
+            float y = cosTheta;
+            float z = sinPhi * sinTheta;
+
+            // Push vertex coordinates
+            vertices.push_back(radius * x); // X
+            vertices.push_back(radius * y); // Y
+            vertices.push_back(radius * z); // Z
+        }
+    }
+
+    for (unsigned int lat = 0; lat < latitudeSegments; ++lat) {
+        for (unsigned int lon = 0; lon < longitudeSegments; ++lon) {
+            unsigned int first = (lat * (longitudeSegments + 1)) + lon;
+            unsigned int second = first + longitudeSegments + 1;
+
+            indices.push_back(first);
+            indices.push_back(second);
+            indices.push_back(first + 1);
+
+            indices.push_back(second);
+            indices.push_back(second + 1);
+            indices.push_back(first + 1);
+        }
+    }
+}
+
+void A1::breakWall(int x, int y){
+	m.setValue(x, y, 0);
+	generateMaze();
+}
+
 void A1::randomMaze(){
 	m.digMaze();
 	m.printMaze();
 	A1::generateMaze();
+	avatar_pos = glm::vec3(m.getStart().y, 0, m.getStart().x);
+	runState = true;
 }
 
 void A1::generateMaze(){
@@ -257,9 +368,62 @@ void A1::updateView(){
  */
 void A1::appLogic()
 {
-	// Place per frame, application logic here ...
+	// avatar movement
+	if(runState && avatar_moveDir != STOP){
+		// discrete movement, move 1 unit at a time
+		float move = 1.0f;
+		prev_avatar_pos = avatar_pos;
+		switch(avatar_moveDir){
+			case UP:
+				avatar_pos.z -= move;
+				break;
+			case DOWN:
+				avatar_pos.z += move;
+				break;
+			case LEFT:
+				avatar_pos.x -= move;
+				break;
+			case RIGHT:
+				avatar_pos.x += move;
+				break;
+			default:
+				break;
+		}
+		avatar_moveDir = STOP;
+		if(
+			avatar_pos.x < 0 || avatar_pos.x >= DIM || 
+			avatar_pos.z < 0 || avatar_pos.z >= DIM
+		){
+			avatar_pos = prev_avatar_pos;
+		}
+		else if(m.getValue(avatar_pos.z, avatar_pos.x) == 1){
+			if(avatar_shift){
+				// break the wall
+				breakWall(avatar_pos.z, avatar_pos.x);
+			}
+			else{
+				avatar_pos = prev_avatar_pos;
+			}
+		}
+	}
 
-	// avatar movement, animation stuff
+	// camera Persistence rotation
+	if(persistence_timer > 0){
+		double cur_time = glfwGetTime();
+		persistence_timer -= cur_time - glfw_time;
+		glfw_time = cur_time;
+
+		if(persistence_timer < 0){
+			persistence_timer = 0;
+			deltaX = 0;
+			deltaY = 0;
+		}
+
+		// lerp deltaX and deltaY to 0 a+t*(b-a)
+		float dx = deltaX * (persistence_timer / persistence_time);
+		float dy = deltaY * (persistence_timer / persistence_time);
+		screenToCameraRotation(dx, dy);
+	}
 }
 
 //----------------------------------------------------------------------------------------
@@ -292,14 +456,23 @@ void A1::guiLogic()
 
 		// Prefixing a widget name with "##" keeps it from being
 		// displayed.
-
-		ImGui::PushID( 0 );
-		ImGui::ColorEdit3( "##Colour", colour );
+		ImGui::ColorEdit3("Maze Colour", maze_colour);
 		ImGui::SameLine();
-		if( ImGui::RadioButton( "##Col", &current_col, 0 ) ) {
+		if( ImGui::RadioButton( "##Maze Col", &current_col, 1 ) ) {
 			// Select this colour.
 		}
-		ImGui::PopID();
+
+		ImGui::ColorEdit3("Floor Colour", floor_colour);
+		ImGui::SameLine();
+		if( ImGui::RadioButton( "##Floor Col", &current_col, 2 ) ) {
+			// Select this colour.
+		}
+
+		ImGui::ColorEdit3("Avatar Colour", avatar_colour);
+		ImGui::SameLine();
+		if( ImGui::RadioButton( "##Avatar Col", &current_col, 3 ) ) {
+			// Select this colour.
+		}
 
 		// camera angle control window
 		ImGui::Text("Camera Control");
@@ -354,16 +527,37 @@ void A1::draw()
 		glUniform3f( col_uni, 1, 1, 1 );
 		glDrawArrays( GL_LINES, 0, (3+DIM)*4 );
 
-		// Draw the cubes
-		auto scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, scaleFactor, 1.0f));
-		// glBindVertexArray(m_cube_vao);
-		// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_cube_ibo);
-		glUniform3f( col_uni, 1, 0, 0);
-		glUniformMatrix4fv(M_uni, 1, GL_FALSE, value_ptr(W * scaleMatrix));
+		if(runState){
+			// Draw the floor
+			glBindVertexArray(m_floor_vao);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_floor_ibo);
+			glUniform3f( col_uni, floor_colour[0], floor_colour[1], floor_colour[2]);
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-		// Draw the maze
-		drawMaze();
+			// Draw the maze
+			glUniform3f( col_uni, maze_colour[0], maze_colour[1], maze_colour[2]);
+			glUniformMatrix4fv(
+				M_uni, 1, GL_FALSE, 
+				value_ptr(
+					W * glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, scaleFactor, 1.0f))
+				)
+			);
+			drawMaze();
+		}
 
+		// Draw the avatar
+		glUniform3f( col_uni, avatar_colour[0], avatar_colour[1], avatar_colour[2]);
+		glUniformMatrix4fv(
+			M_uni, 1, GL_FALSE, 
+			value_ptr(
+				W * glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.5f)) 
+				* glm::translate(glm::mat4(1.0f), avatar_pos) 
+				* glm::scale(glm::mat4(1.0f), glm::vec3(0.5f))
+			)
+		);
+		glBindVertexArray(m_sphere_vao);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_sphere_ibo);
+		glDrawElements(GL_TRIANGLES, m_sphere_idx_size, GL_UNSIGNED_INT, 0);
 
 		// Highlight the active square.
 	m_shader.disable();
@@ -395,6 +589,25 @@ bool A1::cursorEnterWindowEvent (
 	return eventHandled;
 }
 
+void A1::screenToCameraRotation(float deltaX, float deltaY){
+	float sensitivity = 0.004 * r;
+	deltaX *= sensitivity;
+	deltaY *= sensitivity;
+
+	theta += deltaX;
+	phi -= deltaY;
+
+	// Clamp phi between 0 and 90
+	if (phi > 90.0f) phi = 90.0f;
+	else if (phi < 1.0f) phi = 1.0f;
+
+	// Clamp theta between -180 and 180
+	if (theta < -180.0f) theta = 180.0f;
+	else if (theta > 180.0f) theta = -180.0f;
+
+	updateView();
+}
+
 //----------------------------------------------------------------------------------------
 /*
  * Event handler.  Handles mouse cursor movement events.
@@ -410,23 +623,9 @@ bool A1::mouseMoveEvent(double xPos, double yPos)
 		// rotation amount, and maybe the previous X position (so 
 		// that you can rotate relative to the *change* in X.
 		if(LeftMousePressed){
-			float sensitivity = 0.004 * r;
-			float deltaX = (xPos - lastX) * sensitivity;
-			float deltaY = (yPos - lastY) * sensitivity;
-
-			theta += deltaX;
-			phi -= deltaY;
-
-			// Clamp phi between 0 and 90
-			if (phi > 90.0f) phi = 90.0f;
-			else if (phi < 1.0f) phi = 1.0f;
-
-			// Clamp theta between -180 and 180
-			if (theta < -180.0f) theta = 180.0f;
-			else if (theta > 180.0f) theta = -180.0f;
-
-			updateView();
-
+			deltaX = xPos - lastX;
+			deltaY = yPos - lastY;
+			screenToCameraRotation(deltaX, deltaY);
 			lastX = xPos;
 			lastY = yPos;
 		}
@@ -451,6 +650,8 @@ bool A1::mouseButtonInputEvent(int button, int actions, int mods) {
 				glfwGetCursorPos(m_window, &lastX, &lastY);
 			} else {
 				LeftMousePressed = false;
+				persistence_timer = persistence_time;
+				glfw_time = glfwGetTime();
 			}
 		}
 	}
@@ -495,13 +696,49 @@ bool A1::keyInputEvent(int key, int action, int mods) {
 
 	// Fill in with event handling code...
 	if( action == GLFW_PRESS ) {
-		// Space and Backspace to change scaleFactor
-		if( key == GLFW_KEY_SPACE ) {
-			scaleFactor += 1.0f;
-			if (scaleFactor > 10.0f) scaleFactor = 10.0f;
-		} else if( key == GLFW_KEY_BACKSPACE ) {
-			scaleFactor -= 1.0f;
-			if (scaleFactor < 0.0f) scaleFactor = 0.01f;
+		switch (key) {
+			case GLFW_KEY_SPACE:
+				scaleFactor += 1.0f;
+				if (scaleFactor > 10.0f) scaleFactor = 10.0f;
+				break;
+			case GLFW_KEY_BACKSPACE:
+				scaleFactor -= 1.0f;
+				if (scaleFactor < 0.0f) scaleFactor = 0.01f;
+				break;
+			case GLFW_KEY_UP:
+				avatar_moveDir = UP;
+				break;
+			case GLFW_KEY_DOWN:
+				avatar_moveDir = DOWN;
+				break;
+			case GLFW_KEY_LEFT:
+				avatar_moveDir = LEFT;
+				break;
+			case GLFW_KEY_RIGHT:
+				avatar_moveDir = RIGHT;
+				break;
+			case GLFW_KEY_D:
+				randomMaze();
+				break;
+			case GLFW_KEY_R:
+				resetParameters();
+				break;
+			case GLFW_KEY_LEFT_SHIFT:
+				avatar_shift = true;
+				cout << "Shift pressed" << endl;
+				break;
+			case GLFW_KEY_Q:
+				glfwSetWindowShouldClose(m_window, GL_TRUE);
+				break;
+		}
+	}
+
+	if (action == GLFW_RELEASE) {
+		switch (key) {
+			case GLFW_KEY_LEFT_SHIFT:
+				avatar_shift = false;
+				cout << "Shift released" << endl;
+				break;
 		}
 	}
 

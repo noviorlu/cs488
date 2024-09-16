@@ -30,12 +30,23 @@ protected:
 	virtual bool keyInputEvent(int key, int action, int mods) override;
 
 private:
+	void resetParameters();
 	void initGrid();
 	void initCube();
-	void randomMaze();
+	void initSphere();
+	void createSphere(
+		std::vector<float>& vertices, 
+		std::vector<unsigned int>& indices, 
+		float radius, 
+		unsigned int longitudeSegments, 
+		unsigned int latitudeSegments
+	);
 
+	void screenToCameraRotation(float deltaX, float deltaY);
 	void updateView();
 
+	void breakWall(int x, int y);
+	void randomMaze();
 	void generateMaze();
 	void drawMaze();
 
@@ -50,9 +61,23 @@ private:
 	GLuint m_grid_vao; // Vertex Array Object
 	GLuint m_grid_vbo; // Vertex Buffer Object
 
-	// Fields related to cube geometry.
+	// Floor geometry
+	GLuint m_floor_vao;
+	GLuint m_floor_ibo;
+
+	// Fields related to Cube geometry.
 	GLuint m_cube_vao; // Vertex Array Object
 	GLuint m_cube_ibo; // Index Buffer Object
+
+	// Fields related to avatar geometry.
+	int m_sphere_idx_size; // sphere triangle index size
+	GLuint m_sphere_vao; // Vertex Array Object
+	GLuint m_sphere_ibo; // Index Buffer Object
+	glm::vec3 avatar_pos;
+	glm::vec3 prev_avatar_pos;
+	enum AvatarMoveDir { STOP, UP, LEFT, DOWN, RIGHT };
+	AvatarMoveDir avatar_moveDir = STOP; 
+	bool avatar_shift = false;
 
 	// Fields related to maze geometry.
 	Maze m;
@@ -73,8 +98,18 @@ private:
 
 	// camera control variables
 	double lastX, lastY;
+	double deltaX, deltaY;
 	bool LeftMousePressed;
+	float persistence_timer = 0.0f;
+	float persistence_time = 0.5f;
+	float glfw_time = 0.0f;
 
 	float colour[3];
 	int current_col;
+
+	float maze_colour[3];
+	float floor_colour[3];
+	float avatar_colour[3];
+	
+	bool runState = false;
 };
