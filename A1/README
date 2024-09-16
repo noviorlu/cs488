@@ -1,0 +1,61 @@
+Overview:
+# Real-Time 3D Maze Graphics Program
+
+This project is a real-time 3D graphics program that generates and displays a maze environment using OpenGL. The environment allows the user to create a maze, control a spherical avatar that moves within the maze, and interact with the world by manipulating walls and colors. The user can rotate and scale the scene using the mouse and interact with the maze through keyboard inputs. This README outlines the key features, user interactions, and basic implementation details of the assignment.
+
+## Instructions
+
+### Compile and Run
+
+1. Clone the repository and navigate to the `A1/` directory.
+2. Use `premake4` and `make` commands to compile the project.
+3. Execute the program from the build directory.
+
+## Key Features
+
+- **3D Maze Generation**: The program draws a 3D grid of cubes to represent the maze environment, consisting of walls that can be grown or shrunk.
+- **Avatar Movement**: A spherical avatar is placed at the start of the maze. Users can move the avatar using the arrow keys. The avatar’s movement is blocked by walls unless the user removes the wall with a shift-arrow key combination.
+- **Wall Manipulation**: The user can use the space key to grow the height of walls and the backspace key to shrink them. The walls cannot be shrunk below the ground plane.
+- **Colour Customization**: The environment includes a colour editor that allows users to change the colours of the maze blocks, the floor, and the avatar.
+- **Camera Control**: The user can rotate the scene using mouse drag, scaling the maze in and out with the mouse scroll wheel. The view can be rotated around the maze's center for better perspective.
+- **Persistence**: If the user releases the mouse while dragging, the grid will continue to rotate based on the last movement (persistence). This continues until the mouse is clicked again.
+- **Reset Functionality**: The reset button restores the grid to its initial state, resets colours, and moves the avatar back to the start position.
+
+## Additional Implementation Details
+
+### Batch Rendering
+
+In addition to the course requirements, this project utilizes batch rendering to optimize performance. Instead of rendering each cube individually with multiple draw calls, all cubes are combined into a single giant maze mesh. This approach significantly reduces the number of draw calls, enhancing rendering efficiency.
+
+However, this optimization comes with a trade-off. When a wall is destructed by pressing the shift button, the entire maze mesh must be regenerated to reflect the changes. This ensures that the maze remains accurate and up-to-date with user interactions.
+
+## Controls
+
+### Keyboard
+
+- `Q`: Quit application.
+- `R`: Reset to initial state.
+- `D`: Generate a new maze and place the avatar at the start.
+- `Arrow keys`: Move the avatar around the maze.
+- `Shift + Arrow keys`: Remove wall sections and move the avatar.
+- `Space`: Increase wall height.
+- `Backspace`: Decrease wall height.
+
+### Mouse
+
+- Drag: Rotate the maze.
+- Scroll: Scale the maze (Zoom in/out).
+- Persistence: Rotates the maze after mouse release if moving.
+
+## Colour Editor
+
+The colour editor allows customization of the following:
+
+- Maze blocks
+- Floor
+- Avatar
+
+## Limitations
+
+- The rotation system is simplistic and does not account for changes in avatar direction relative to grid rotation.
+- The avatar movement might become unintuitive after grid rotation, but this is acceptable as per the assignment requirements.
