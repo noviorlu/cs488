@@ -29,6 +29,11 @@ In addition to the course requirements, this project utilizes batch rendering to
 
 However, this optimization comes with a trade-off. When a wall is destructed by pressing the shift button, the entire maze mesh must be regenerated to reflect the changes. This ensures that the maze remains accurate and up-to-date with user interactions.
 
+### Orbit View Control
+The program includes an orbit view control feature. By toggling the orbit camera switch, users can enable the orbit camera mode. In this mode, the camera rotates around the center of the maze (0, 0, 0) along the x and y axes. This allows users to get a better perspective of the maze environment. Additionally, the camera has a small persistence movement after the mouse is released, continuing the rotation based on the last movementand 
+slow down as it reaches the timer limit it stops.
+
+
 ## Controls
 
 ### Keyboard
