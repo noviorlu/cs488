@@ -95,10 +95,16 @@ private:
 	float theta;
 	float phi;
 	float r;
+	bool isOrbitView = false;
 
-	// camera control variables
+	// persistent view controller
+	glm::dvec2 lastCursorPos;
+	double presistentX; // related to mouse move distance
+
+	// orbit view controller
 	double lastX, lastY;
 	double deltaX, deltaY;
+
 	bool LeftMousePressed;
 	float persistence_timer = 0.0f;
 	float persistence_time = 0.5f;

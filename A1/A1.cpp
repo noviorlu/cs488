@@ -408,22 +408,33 @@ void A1::appLogic()
 	}
 
 	// camera Persistence rotation
-	if(persistence_timer > 0){
-		double cur_time = glfwGetTime();
-		persistence_timer -= cur_time - glfw_time;
-		glfw_time = cur_time;
+	double cur_time = glfwGetTime();
 
-		if(persistence_timer < 0){
-			persistence_timer = 0;
-			deltaX = 0;
-			deltaY = 0;
+	if(isOrbitView){
+		if(persistence_timer > 0){
+			
+			persistence_timer -= cur_time - glfw_time;
+
+			if(persistence_timer < 0){
+				persistence_timer = 0;
+				deltaX = 0;
+				deltaY = 0;
+			}
+
+			// lerp deltaX and deltaY to 0 a+t*(b-a)
+			float dx = deltaX * (persistence_timer / persistence_time);
+			float dy = deltaY * (persistence_timer / persistence_time);
+			screenToCameraRotation(dx, dy);
 		}
-
-		// lerp deltaX and deltaY to 0 a+t*(b-a)
-		float dx = deltaX * (persistence_timer / persistence_time);
-		float dy = deltaY * (persistence_timer / persistence_time);
-		screenToCameraRotation(dx, dy);
 	}
+	else{
+		if(abs(presistentX) > 0.01){
+			// camera rotation
+			screenToCameraRotation(presistentX * 0.01, 0);
+		}
+	}
+
+	glfw_time = cur_time;
 }
 
 //----------------------------------------------------------------------------------------
@@ -446,6 +457,19 @@ void A1::guiLogic()
 	ImGui::Begin("Debug Window", &showDebugWindow, ImVec2(100,100), opacity, windowFlags);
 		if( ImGui::Button( "Quit Application" ) ) {
 			glfwSetWindowShouldClose(m_window, GL_TRUE);
+		}
+
+		// reset button
+		if(ImGui::Button("Reset")){
+			resetParameters();
+		}
+		// dig button
+		if(ImGui::Button("Random Maze")){
+			randomMaze();
+		}
+		// persistant view switch
+		if(ImGui::Checkbox("Orbit View", &isOrbitView)){
+			presistentX = 0;
 		}
 
 		// Eventually you'll create multiple colour widgets with
@@ -486,6 +510,7 @@ void A1::guiLogic()
 			updateView();
 		}
 		ImGui::SliderFloat("Scale Factor", &scaleFactor, 0.5f, 5.0f);
+
 
 /*
 		// For convenience, you can uncomment this to show ImGui's massive
@@ -623,11 +648,13 @@ bool A1::mouseMoveEvent(double xPos, double yPos)
 		// rotation amount, and maybe the previous X position (so 
 		// that you can rotate relative to the *change* in X.
 		if(LeftMousePressed){
-			deltaX = xPos - lastX;
-			deltaY = yPos - lastY;
-			screenToCameraRotation(deltaX, deltaY);
-			lastX = xPos;
-			lastY = yPos;
+			if(isOrbitView){
+				deltaX = xPos - lastX;
+				deltaY = yPos - lastY;
+				screenToCameraRotation(deltaX, deltaY);
+				lastX = xPos;
+				lastY = yPos;
+			}
 		}
 	}
 
@@ -647,11 +674,24 @@ bool A1::mouseButtonInputEvent(int button, int actions, int mods) {
 		if(button == GLFW_MOUSE_BUTTON_LEFT) {
 			if(actions == GLFW_PRESS) {
 				LeftMousePressed = true;
+				
+				// orbit rotation
 				glfwGetCursorPos(m_window, &lastX, &lastY);
-			} else {
+				
+				// persistant rotation
+				lastCursorPos = glm::dvec2(lastX, lastY);
+			} 
+			else if(actions == GLFW_RELEASE) {
 				LeftMousePressed = false;
+
+				// orbit rotation
 				persistence_timer = persistence_time;
 				glfw_time = glfwGetTime();
+
+				// persistant rotation
+				glm::dvec2 curPos;
+				glfwGetCursorPos(m_window, &(curPos.x), &(curPos.y));
+				presistentX = curPos.x - lastCursorPos.x;
 			}
 		}
 	}
@@ -725,7 +765,6 @@ bool A1::keyInputEvent(int key, int action, int mods) {
 				break;
 			case GLFW_KEY_LEFT_SHIFT:
 				avatar_shift = true;
-				cout << "Shift pressed" << endl;
 				break;
 			case GLFW_KEY_Q:
 				glfwSetWindowShouldClose(m_window, GL_TRUE);
@@ -737,7 +776,6 @@ bool A1::keyInputEvent(int key, int action, int mods) {
 		switch (key) {
 			case GLFW_KEY_LEFT_SHIFT:
 				avatar_shift = false;
-				cout << "Shift released" << endl;
 				break;
 		}
 	}
