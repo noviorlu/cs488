@@ -1,0 +1,74 @@
+# Assignment 2: Wireframe Cube Drawing
+
+## Summary
+
+In this assignment, I successfully wrote a program to draw a wireframe cube. I applied modeling transformations to the cube and viewing transformations to the camera. The challenge was to draw lines directly in normalized device coordinates, implementing the geometric pipeline, including perspective projection and clipping.
+
+## Objectives Achieved
+
+1. Implemented model transformations with respect to the cube's local origin.
+2. Ensured viewing transformations worked as expected according to the eye's location.
+3. Applied model transformations to the cube's gnomon, except for scaling.
+4. Ensured smooth transformations in all modes while the mouse is moved.
+5. Allowed rotations, translations, and scales in any order without restrictions.
+6. Implemented a user interface with buttons, radio buttons for interaction modes, and a status line.
+7. Correctly implemented perspective transformation with adjustable field of view.
+8. Implemented viewport user interface and mapping as specified.
+9. Clipped lines to the near and far planes.
+10. Clipped lines to the sides of the viewing volume.
+
+## Interface
+
+### GUI Panel Widgets
+
+- **Reset Button (A)**: Restores the original state of all transforms and perspective parameters.
+- **Quit Button (Q)**: Terminates the program.
+- **Radio Buttons**: Control the current interaction modes.
+- **Status Line**: Indicates the locations of the near and far planes.
+
+### Interaction Modes
+
+- **Rotate View (O)**: Rotate the view vector about the eye's axes.
+- **Translate View (E)**: Translate the eye position along the eye's axes.
+- **Perspective (P)**: Adjust the field of view and translate the near and far planes.
+- **Rotate Model (R)**: Rotate the cube about its local axes.
+- **Translate Model (T)**: Translate the cube about its local axes.
+- **Scale Model (S)**: Scale the cube in its local directions.
+- **Viewport (V)**: Draw an axis-aligned rectangle on screen to define the viewport.
+
+## Implementation Steps
+
+1. Drew a cube using orthographic projection.
+2. Implemented translations of the cube and view.
+3. Drew the two gnomons.
+4. Clipped to the near and far clipping planes.
+5. Added the viewport and adjusted the cube's position and size on the screen.
+6. Clipped to the sides of the clipping plane.
+7. Implemented perspective projection.
+
+## Deliverables
+
+- A ZIP file of the `A2/` directory, excluding unnecessary files.
+- A README file.
+- A screenshot.
+- A signed copy of `a2declare.pdf`.
+
+## Ideas for Extensions
+
+- Transformed the cube relative to the World Coordinate system.
+- Implemented polygon clipping instead of line clipping.
+
+## Donated Code
+
+- Modified `A2.hpp` and `A2.cpp`.
+- Used provided methods `initLineData()`, `drawLine()`, and `setLineColour()`.
+- Added interaction callbacks for mouse tracking and transformations.
+
+## Notes
+
+- Did not use OpenGL API calls directly.
+- Used GLM library for vector and matrix manipulation but avoided `glm::translate()`, `glm::rotate()`, `glm::scale()`, and `glm::perspective()`.
+- Constructed perspective projection matrix manually if used.
+
+Take a look in the `A2.cpp` file for the detailed implementation.
+
