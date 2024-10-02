@@ -138,10 +138,6 @@ protected:
 	glm::mat4 m_orthoMatrix;
 	glm::mat4 m_projMatrix;
 
-	glm::mat4 m_vpMatrix;
-	glm::mat4 m_mvpMatrix;
-
-
 	// Mouse Control
 	const char* controlModeNames[8] = {
 		"NA", "ROTATEVIEW", "TRANSLATEVIEW", "PERSPECTIVE", "ROTATEMODEL", "TRANSLATEMODEL", "SCALEMODEL", "VIEWPORT"

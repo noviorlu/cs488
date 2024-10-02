@@ -374,34 +374,21 @@ glm::mat4 A2::projectionMatrix(float fov_y, float aspect, float near, float far)
 }
 
 void A2::matrixConstruction(){
-	bool modified = false;
 	if(m_modelFlag){
 		m_modelMatrix = modelMatrix(m_cubePos, m_cubeRotate, m_cubeScale);
 		m_modelFlag = false;
-		modified = true;
 	}
 	if(m_viewFlag){
 		m_viewMatrix = viewMatrix(m_camPos, m_camRotate);
 		m_viewFlag = false;
-		modified = true;
 	}
 	if(m_orthoFlag){
-		m_projMatrix = orthographicMatrix(m_left, m_right, m_bottom, m_top, m_near, m_far);
+		m_orthoMatrix = orthographicMatrix(m_viewportLeft, m_viewportRight, m_viewportBottom, m_viewportTop, m_near, m_far);
 		m_orthoFlag = false;
-		modified = true;
 	}
 	if(m_projFlag){
 		m_projMatrix = projectionMatrix(glm::radians(m_fov), m_aspect, m_near, m_far);
 		m_projFlag = false;
-		modified = true;
-	}
-	if(modified){
-		if(isOrtho){
-			m_vpMatrix = m_orthoMatrix * m_viewMatrix;
-		}else{
-			m_vpMatrix = m_projMatrix * m_viewMatrix;
-		}
-		m_mvpMatrix = m_vpMatrix * m_modelMatrix;
 	}
 }
 
@@ -447,41 +434,38 @@ bool A2::nearFarClipping(glm::vec4 &v0, glm::vec4 &v1){
 	return false;
 }
 
-bool A2::boundaryClipping(glm::vec4 &v0, glm::vec4 &v1){
-	if(v0.x < -1.0f && v1.x < -1.0f) return true;
-	if(v0.x > 1.0f && v1.x > 1.0f) return true;
 
-	if(v0.y < -1.0f && v1.y < -1.0f) return true;
-	if(v0.y > 1.0f && v1.y > 1.0f) return true;
+bool A2::boundaryClipping(glm::vec4 &v0, glm::vec4 &v1) {
+	auto clip = [](float p, float q, float &t0, float &t1) -> bool {
+		if (p == 0) return q >= 0;
+		float r = q / p;
+		if (p < 0) {
+			if (r > t1) return false;
+			if (r > t0) t0 = r;
+		} else {
+			if (r < t0) return false;
+			if (r < t1) t1 = r;
+		}
+		return true;
+	};
 
-	if(v0.x < -1.0f){
-		v0 = v0 + (v1 - v0) * (-1.0f - v0.x) / (v1.x - v0.x);
-	}
-	else if(v1.x < -1.0f){
-		v1 = v0 + (v0 - v1) * (-1.0f - v1.x) / (v0.x - v1.x);
-	}
+	float t0 = 0.0f, t1 = 1.0f;
+	glm::vec4 d = v1 - v0;
 
-	if(v0.x > 1.0f){
-		v0 = v0 + (v1 - v0) * (1.0f - v0.x) / (v1.x - v0.x);
+	if (clip(-d.x, v0.x + 1, t0, t1) && clip(d.x, 1 - v0.x, t0, t1) &&
+		clip(-d.y, v0.y + 1, t0, t1) && clip(d.y, 1 - v0.y, t0, t1)) {
+		if (t1 < 1) v1 = v0 + t1 * d;
+		if (t0 > 0) v0 = v0 + t0 * d;
+		
+		// project to viewport
+		v0.x = m_viewportLeft + (m_viewportRight - m_viewportLeft) * (v0.x + 1) / 2;
+		v0.y = m_viewportBottom + (m_viewportTop - m_viewportBottom) * (v0.y + 1) / 2;
+		v1.x = m_viewportLeft + (m_viewportRight - m_viewportLeft) * (v1.x + 1) / 2;
+		v1.y = m_viewportBottom + (m_viewportTop - m_viewportBottom) * (v1.y + 1) / 2;
+		
+		return false;
 	}
-	else if(v1.x > 1.0f){
-		v1 = v0 + (v0 - v1) * (1.0f - v1.x) / (v0.x - v1.x);
-	}
-
-	if(v0.y < -1.0f){
-		v0 = v0 + (v1 - v0) * (-1.0f - v0.y) / (v1.y - v0.y);
-	}
-	else if(v1.y < -1.0f){
-		v1 = v0 + (v0 - v1) * (-1.0f - v1.y) / (v0.y - v1.y);
-	}
-
-	if(v0.y > 1.0f){
-		v0 = v0 + (v1 - v0) * (1.0f - v0.y) / (v1.y - v0.y);
-	}
-	else if(v1.y > 1.0f){
-		v1 = v0 + (v0 - v1) * (1.0f - v1.y) / (v0.y - v1.y);
-	}
-	return false;
+	return true;
 }
 
 
@@ -525,7 +509,7 @@ void A2::drawCube(glm::mat4 tf)
 			ndcNormalize(v1);
 		}
 
-		// if(boundaryClipping(v0, v1)) continue;
+		if(boundaryClipping(v0, v1)) continue;
 
 		drawLine(glm::vec2(v0), glm::vec2(v1));
     }
@@ -561,7 +545,7 @@ void A2::drawCoordinate(glm::mat4 tf)
 			ndcNormalize(v1);
 		}
 
-		// if(boundaryClipping(v0, v1)) continue;
+		if(boundaryClipping(v0, v1)) continue;
 
 		drawLine(glm::vec2(v0), glm::vec2(v1));
 	}
@@ -607,10 +591,23 @@ void A2::guiLogic()
 		ImGui::RadioButton("< Translate Model >", (int*)&m_controlMode, TRANSLATEMODEL);
 		ImGui::RadioButton("< Scale Model >", (int*)&m_controlMode, SCALEMODEL);
 		ImGui::RadioButton("< Viewport >", (int*)&m_controlMode, VIEWPORT);
+		if(ImGui::Checkbox("Orthographic", &isOrtho)){
+			m_projFlag = true;
+			m_orthoFlag = true;
+		}
 
+		if( ImGui::Button( "Reset" ) ) {
+			resetParameters();
+		}
+
+
+		// Create Button, and check if it was clicked:
+		if( ImGui::Button( "Quit Application" ) ) {
+			glfwSetWindowShouldClose(m_window, GL_TRUE);
+		}
 
 		// Trigger Debug Values
-		if(ImGui::Button("Trigger Debug Values")) isDebug = !isDebug;
+		if(ImGui::Button("Show Values")) isDebug = !isDebug;
 		if(isDebug){
 			ImGui::Text("Cube Position: (%.2f, %.2f, %.2f)", m_cubePos.x, m_cubePos.y, m_cubePos.z);
 			ImGui::Text("Cube Scale: (%.2f, %.2f, %.2f)", m_cubeScale.x, m_cubeScale.y, m_cubeScale.z);
@@ -627,22 +624,12 @@ void A2::guiLogic()
 			ImGui::Text("Top: %.2f", m_top);
 			ImGui::Text("Viewport Start: (%.2f, %.2f)", m_viewportStart.x, m_viewportStart.y);
 			ImGui::Text("Viewport End: (%.2f, %.2f)", m_viewportEnd.x, m_viewportEnd.y);
+			ImGui::Text("Viewport Left: %.2f", m_viewportLeft);
+			ImGui::Text("Viewport Right: %.2f", m_viewportRight);
+			ImGui::Text("Viewport Bottom: %.2f", m_viewportBottom);
+			ImGui::Text("Viewport Top: %.2f", m_viewportTop);
 			ImGui::Text("Control Mode: %s", controlModeNames[m_controlMode]);
 			ImGui::Text("Mouse Button: %s", mouseButtonNames[m_mouseButton]);
-		}
-		if(ImGui::Checkbox("Orthographic", &isOrtho)){
-			m_projFlag = true;
-			m_orthoFlag = true;
-		}
-
-		if( ImGui::Button( "Reset" ) ) {
-			resetParameters();
-		}
-
-
-		// Create Button, and check if it was clicked:
-		if( ImGui::Button( "Quit Application" ) ) {
-			glfwSetWindowShouldClose(m_window, GL_TRUE);
 		}
 
 		ImGui::Text( "Framerate: %.1f FPS", ImGui::GetIO().Framerate );
