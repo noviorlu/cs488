@@ -22,7 +22,8 @@ unsigned int SceneNode::nodeInstanceCount = 0;
 SceneNode::SceneNode(const std::string& name)
   : m_name(name),
 	m_nodeType(NodeType::SceneNode),
-	trans(mat4()),
+	trans(mat4(1.0f)),
+	initialTrans(mat4(1.0f)),
 	isSelected(false),
 	m_nodeId(nodeInstanceCount++)
 {
@@ -35,6 +36,7 @@ SceneNode::SceneNode(const SceneNode & other)
 	: m_nodeType(other.m_nodeType),
 	  m_name(other.m_name),
 	  trans(other.trans),
+	  initialTrans(other.trans),
 	  invtrans(other.invtrans)
 {
 	for(SceneNode * child : other.children) {
@@ -97,6 +99,23 @@ void SceneNode::rotate(char axis, float angle) {
 }
 
 //---------------------------------------------------------------------------------------
+
+void SceneNode::draw(
+        const glm::mat4& modelMatrix, const glm::mat4& viewMatrix, 
+        const ShaderProgram& shader, BatchInfoMap& modelBatch) const
+{
+	// Assert if m_name is not "root" and exit directly
+	if (m_name != "root") {
+		std::cerr << "Error: Attempt to draw a non-root node, can only have one unique node name root, .lua Format Incorrect!" << std::endl;
+		exit(-1);
+	}
+	
+	for (const SceneNode* child : children) {
+		child->draw(modelMatrix * trans, viewMatrix, shader, modelBatch);
+	}
+}
+
+//---------------------------------------------------------------------------------------
 void SceneNode::scale(const glm::vec3 & amount) {
 	trans = glm::scale(amount) * trans;
 }
@@ -105,7 +124,6 @@ void SceneNode::scale(const glm::vec3 & amount) {
 void SceneNode::translate(const glm::vec3& amount) {
 	trans = glm::translate(amount) * trans;
 }
-
 
 //---------------------------------------------------------------------------------------
 int SceneNode::totalSceneNodes() const {

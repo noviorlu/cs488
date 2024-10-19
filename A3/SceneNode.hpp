@@ -3,6 +3,9 @@
 #pragma once
 
 #include "Material.hpp"
+#include "cs488-framework/OpenGLImport.hpp"
+#include "cs488-framework/ShaderProgram.hpp"
+#include "cs488-framework/MeshConsolidator.hpp"
 
 #include <glm/glm.hpp>
 
@@ -35,11 +38,26 @@ public:
     
     void remove_child(SceneNode* child);
 
+    virtual void draw(
+        const glm::mat4& modelMatrix, const glm::mat4& viewMatrix, 
+        const ShaderProgram& shader, BatchInfoMap& modelBatch) const;
+
 	//-- Transformations:
     void rotate(char axis, float angle);
     void scale(const glm::vec3& amount);
     void translate(const glm::vec3& amount);
-
+    void restoreInitialTrans(){ 
+        trans = initialTrans;
+        for(SceneNode* child : children){
+            child->restoreInitialTrans();
+        }
+     }
+    void storeInitialTrans(){ 
+        initialTrans = trans;
+        for(SceneNode* child : children){
+            child->storeInitialTrans();
+        }
+     }
 
 	friend std::ostream & operator << (std::ostream & os, const SceneNode & node);
 
@@ -48,7 +66,8 @@ public:
     // Transformations
     glm::mat4 trans;
     glm::mat4 invtrans;
-    
+    glm::mat4 initialTrans;
+
     std::list<SceneNode*> children;
 
 	NodeType m_nodeType;

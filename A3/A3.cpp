@@ -85,7 +85,6 @@ void A3::init()
 
 	initLightSources();
 
-
 	// Exiting the current scope calls delete automatically on meshConsolidator freeing
 	// all vertex data resources.  This is fine since we already copied this data to
 	// VBOs on the GPU.  We have no use for storing vertex data on the CPU side beyond
@@ -260,7 +259,7 @@ void A3::initViewMatrix() {
 void A3::initLightSources() {
 	// World-space position
 	m_light.position = vec3(10.0f, 10.0f, 10.0f);
-	m_light.rgbIntensity = vec3(0.0f); // light
+	m_light.rgbIntensity = vec3(0.5f); // light
 }
 
 //----------------------------------------------------------------------------------------
@@ -343,7 +342,7 @@ void A3::guiLogic()
 
 //----------------------------------------------------------------------------------------
 // Update mesh specific shader uniforms:
-static void updateShaderUniforms(
+/* static void updateShaderUniforms(
 		const ShaderProgram & shader,
 		const GeometryNode & node,
 		const glm::mat4 & viewMatrix
@@ -372,7 +371,7 @@ static void updateShaderUniforms(
 	}
 	shader.disable();
 
-}
+} */
 
 //----------------------------------------------------------------------------------------
 /*
@@ -383,14 +382,12 @@ void A3::draw() {
 	glEnable( GL_DEPTH_TEST );
 	renderSceneGraph(*m_rootNode);
 
-
 	glDisable( GL_DEPTH_TEST );
 	renderArcCircle();
 }
 
 //----------------------------------------------------------------------------------------
 void A3::renderSceneGraph(const SceneNode & root) {
-
 	// Bind the VAO once here, and reuse for all GeometryNode rendering below.
 	glBindVertexArray(m_vao_meshData);
 
@@ -406,25 +403,26 @@ void A3::renderSceneGraph(const SceneNode & root) {
 	// subclasses, that renders the subtree rooted at every node.  Or you
 	// could put a set of mutually recursive functions in this class, which
 	// walk down the tree from nodes of different types.
+	root.draw(glm::mat4(1.0f), m_view, m_shader, m_batchInfoMap);
 
-	for (const SceneNode * node : root.children) {
+	// for (const SceneNode * node : root.children) {
 
-		if (node->m_nodeType != NodeType::GeometryNode)
-			continue;
+		// if (node->m_nodeType != NodeType::GeometryNode)
+		// 	continue;
 
-		const GeometryNode * geometryNode = static_cast<const GeometryNode *>(node);
+		// const GeometryNode * geometryNode = static_cast<const GeometryNode *>(node);
 
-		updateShaderUniforms(m_shader, *geometryNode, m_view);
+		// updateShaderUniforms(m_shader, *geometryNode, m_view);
 
 
-		// Get the BatchInfo corresponding to the GeometryNode's unique MeshId.
-		BatchInfo batchInfo = m_batchInfoMap[geometryNode->meshId];
+		// // Get the BatchInfo corresponding to the GeometryNode's unique MeshId.
+		// BatchInfo batchInfo = m_batchInfoMap[geometryNode->meshId];
 
-		//-- Now render the mesh:
-		m_shader.enable();
-		glDrawArrays(GL_TRIANGLES, batchInfo.startIndex, batchInfo.numIndices);
-		m_shader.disable();
-	}
+		// //-- Now render the mesh:
+		// m_shader.enable();
+		// glDrawArrays(GL_TRIANGLES, batchInfo.startIndex, batchInfo.numIndices);
+		// m_shader.disable();
+	// }
 
 	glBindVertexArray(0);
 	CHECK_GL_ERRORS;

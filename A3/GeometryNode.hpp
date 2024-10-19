@@ -11,6 +11,13 @@ public:
 		const std::string & name
 	);
 
+	void draw(
+		const glm::mat4 & modelMatrix,
+		const glm::mat4 & viewMatrix,
+		const ShaderProgram & shader,
+		BatchInfoMap & modelBatch
+	) const override;
+
 	Material material;
 
 	// Mesh Identifier. This must correspond to an object name of
