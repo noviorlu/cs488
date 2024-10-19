@@ -32,27 +32,28 @@ void GeometryNode::draw(
 	GLint location = shader.getUniformLocation("ModelView");
 	mat4 modelView = viewMatrix * modelMatrix * trans;
 	glUniformMatrix4fv(location, 1, GL_FALSE, value_ptr(modelView));
-	CHECK_GL_ERRORS;
 
 	//-- Set NormMatrix:
 	location = shader.getUniformLocation("NormalMatrix");
 	mat3 normalMatrix = glm::transpose(glm::inverse(mat3(modelView)));
 	glUniformMatrix3fv(location, 1, GL_FALSE, value_ptr(normalMatrix));
-	CHECK_GL_ERRORS;
-
 
 	//-- Set Material values:
 	location = shader.getUniformLocation("material.kd");
 	vec3 kd = material.kd;
 	glUniform3fv(location, 1, value_ptr(kd));
-	CHECK_GL_ERRORS;
+
+	//-- Set SceneNode ID:
+	location = shader.getUniformLocation("nodeId");
+	float id = (float)m_nodeId;
+	glUniform1f(location, id);
 
 	BatchInfo batchInfo = modelBatch[meshId];
 
 	//-- Now render the mesh:
 	glDrawArrays(GL_TRIANGLES, batchInfo.startIndex, batchInfo.numIndices);
 	shader.disable();
-
+	
 	for (const SceneNode* child : children) {
 		child->draw(modelMatrix * trans, viewMatrix, shader, modelBatch);
 	}

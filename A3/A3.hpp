@@ -8,6 +8,7 @@
 #include "cs488-framework/MeshConsolidator.hpp"
 
 #include "SceneNode.hpp"
+#include "GBuffer.hpp"
 
 #include <glm/glm.hpp>
 #include <memory>
@@ -70,6 +71,11 @@ protected:
 	GLuint m_vao_arcCircle;
 	GLint m_arc_positionAttribLocation;
 	ShaderProgram m_shader_arcCircle;
+
+	GBuffer m_gBuffer;
+	ShaderProgram m_geometryPass;
+	ShaderProgram m_lightingPass;
+
 
 	// BatchInfoMap is an associative container that maps a unique MeshId to a BatchInfo
 	// object. Each BatchInfo object contains an index offset and the number of indices

@@ -87,6 +87,8 @@ void A3::init()
 
 	m_rootNode->storeInitialTrans();
 	reset();
+
+	m_gBuffer.initialize(m_framebufferWidth, m_framebufferHeight);
 	// Exiting the current scope calls delete automatically on meshConsolidator freeing
 	// all vertex data resources.  This is fine since we already copied this data to
 	// VBOs on the GPU.  We have no use for storing vertex data on the CPU side beyond
@@ -112,10 +114,20 @@ void A3::processLuaSceneFile(const std::string & filename) {
 //----------------------------------------------------------------------------------------
 void A3::createShaderProgram()
 {
-	m_shader.generateProgramObject();
-	m_shader.attachVertexShader( getAssetFilePath("VertexShader.vs").c_str() );
-	m_shader.attachFragmentShader( getAssetFilePath("FragmentShader.fs").c_str() );
-	m_shader.link();
+	// m_shader.generateProgramObject();
+	// m_shader.attachVertexShader( getAssetFilePath("Phong.vs").c_str() );
+	// m_shader.attachFragmentShader( getAssetFilePath("Phong.fs").c_str() );
+	// m_shader.link();
+
+	m_geometryPass.generateProgramObject();
+	m_geometryPass.attachVertexShader( getAssetFilePath("Deffered/GeometryPass.vs").c_str() );
+	m_geometryPass.attachFragmentShader( getAssetFilePath("Deffered/GeometryPass.fs").c_str() );
+	m_geometryPass.link();
+
+	m_lightingPass.generateProgramObject();
+	m_lightingPass.attachVertexShader( getAssetFilePath("Deffered/LightPass.vs").c_str() );
+	m_lightingPass.attachFragmentShader( getAssetFilePath("Deffered/LightPass.fs").c_str() );
+	m_lightingPass.link();
 
 	m_shader_arcCircle.generateProgramObject();
 	m_shader_arcCircle.attachVertexShader( getAssetFilePath("arc_VertexShader.vs").c_str() );
@@ -131,14 +143,12 @@ void A3::enableVertexShaderInputSlots()
 		glBindVertexArray(m_vao_meshData);
 
 		// Enable the vertex shader attribute location for "position" when rendering.
-		m_positionAttribLocation = m_shader.getAttribLocation("position");
+		m_positionAttribLocation = m_geometryPass.getAttribLocation("inPosition");
 		glEnableVertexAttribArray(m_positionAttribLocation);
 
 		// Enable the vertex shader attribute location for "normal" when rendering.
-		m_normalAttribLocation = m_shader.getAttribLocation("normal");
+		m_normalAttribLocation = m_geometryPass.getAttribLocation("inNormal");
 		glEnableVertexAttribArray(m_normalAttribLocation);
-
-		CHECK_GL_ERRORS;
 	}
 
 
@@ -149,8 +159,6 @@ void A3::enableVertexShaderInputSlots()
 		// Enable the vertex shader attribute location for "position" when rendering.
 		m_arc_positionAttribLocation = m_shader_arcCircle.getAttribLocation("position");
 		glEnableVertexAttribArray(m_arc_positionAttribLocation);
-
-		CHECK_GL_ERRORS;
 	}
 
 	// Restore defaults
@@ -266,32 +274,54 @@ void A3::initLightSources() {
 
 //----------------------------------------------------------------------------------------
 void A3::uploadCommonSceneUniforms() {
-	m_shader.enable();
+	// m_shader.enable();
+	// {
+	// 	//-- Set Perpsective matrix uniform for the scene:
+	// 	GLint location = m_shader.getUniformLocation("Perspective");
+	// 	glUniformMatrix4fv(location, 1, GL_FALSE, value_ptr(m_perpsective));
+	// 	CHECK_GL_ERRORS;
+
+
+	// 	//-- Set LightSource uniform for the scene:
+	// 	{
+	// 		location = m_shader.getUniformLocation("light.position");
+	// 		glUniform3fv(location, 1, value_ptr(m_light.position));
+	// 		location = m_shader.getUniformLocation("light.rgbIntensity");
+	// 		glUniform3fv(location, 1, value_ptr(m_light.rgbIntensity));
+	// 		CHECK_GL_ERRORS;
+	// 	}
+
+	// 	//-- Set background light ambient intensity
+	// 	{
+	// 		location = m_shader.getUniformLocation("ambientIntensity");
+	// 		vec3 ambientIntensity(0.25f);
+	// 		glUniform3fv(location, 1, value_ptr(ambientIntensity));
+	// 		CHECK_GL_ERRORS;
+	// 	}
+	// }
+	// m_shader.disable();
+
+	m_geometryPass.enable();
 	{
 		//-- Set Perpsective matrix uniform for the scene:
-		GLint location = m_shader.getUniformLocation("Perspective");
+		GLint location = m_geometryPass.getUniformLocation("Perspective");
 		glUniformMatrix4fv(location, 1, GL_FALSE, value_ptr(m_perpsective));
-		CHECK_GL_ERRORS;
-
-
-		//-- Set LightSource uniform for the scene:
-		{
-			location = m_shader.getUniformLocation("light.position");
-			glUniform3fv(location, 1, value_ptr(m_light.position));
-			location = m_shader.getUniformLocation("light.rgbIntensity");
-			glUniform3fv(location, 1, value_ptr(m_light.rgbIntensity));
-			CHECK_GL_ERRORS;
-		}
-
-		//-- Set background light ambient intensity
-		{
-			location = m_shader.getUniformLocation("ambientIntensity");
-			vec3 ambientIntensity(0.25f);
-			glUniform3fv(location, 1, value_ptr(ambientIntensity));
-			CHECK_GL_ERRORS;
-		}
 	}
-	m_shader.disable();
+	m_geometryPass.disable();
+
+	m_lightingPass.enable();
+	{
+		// GLint loc_gPosition = m_lightingPass.getUniformLocation("gPosition");
+    	// glUniform1i(loc_gPosition, 0);
+
+		// GLint loc_gNormal  = m_lightingPass.getUniformLocation("gNormal");
+    	// glUniform1i(loc_gNormal, 1);
+		
+		GLint loc_gAlbedoID = m_lightingPass.getUniformLocation("gAlbedoID");
+		glUniform1i(loc_gAlbedoID, 2);
+	}
+
+	m_lightingPass.disable();
 }
 
 //----------------------------------------------------------------------------------------
@@ -352,39 +382,6 @@ void A3::guiLogic()
 }
 
 //----------------------------------------------------------------------------------------
-// Update mesh specific shader uniforms:
-/* static void updateShaderUniforms(
-		const ShaderProgram & shader,
-		const GeometryNode & node,
-		const glm::mat4 & viewMatrix
-) {
-
-	shader.enable();
-	{
-		//-- Set ModelView matrix:
-		GLint location = shader.getUniformLocation("ModelView");
-		mat4 modelView = viewMatrix * node.trans;
-		glUniformMatrix4fv(location, 1, GL_FALSE, value_ptr(modelView));
-		CHECK_GL_ERRORS;
-
-		//-- Set NormMatrix:
-		location = shader.getUniformLocation("NormalMatrix");
-		mat3 normalMatrix = glm::transpose(glm::inverse(mat3(modelView)));
-		glUniformMatrix3fv(location, 1, GL_FALSE, value_ptr(normalMatrix));
-		CHECK_GL_ERRORS;
-
-
-		//-- Set Material values:
-		location = shader.getUniformLocation("material.kd");
-		vec3 kd = node.material.kd;
-		glUniform3fv(location, 1, value_ptr(kd));
-		CHECK_GL_ERRORS;
-	}
-	shader.disable();
-
-} */
-
-//----------------------------------------------------------------------------------------
 /*
  * Called once per frame, after guiLogic().
  */
@@ -421,44 +418,18 @@ void A3::draw() {
 
 //----------------------------------------------------------------------------------------
 void A3::renderSceneGraph(const SceneNode & root) {
-	// Bind the VAO once here, and reuse for all GeometryNode rendering below.
+	// Geometry pass	
+	m_gBuffer.bind();
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	
 	glBindVertexArray(m_vao_meshData);
-
-	// This is emphatically *not* how you should be drawing the scene graph in
-	// your final implementation.  This is a non-hierarchical demonstration
-	// in which we assume that there is a list of GeometryNodes living directly
-	// underneath the root node, and that we can draw them in a loop.  It's
-	// just enough to demonstrate how to get geometry and materials out of
-	// a GeometryNode and onto the screen.
-
-	// You'll want to turn this into recursive code that walks over the tree.
-	// You can do that by putting a method in SceneNode, overridden in its
-	// subclasses, that renders the subtree rooted at every node.  Or you
-	// could put a set of mutually recursive functions in this class, which
-	// walk down the tree from nodes of different types.
-	root.draw(glm::mat4(1.0f), m_view, m_shader, m_batchInfoMap);
-
-	// for (const SceneNode * node : root.children) {
-
-		// if (node->m_nodeType != NodeType::GeometryNode)
-		// 	continue;
-
-		// const GeometryNode * geometryNode = static_cast<const GeometryNode *>(node);
-
-		// updateShaderUniforms(m_shader, *geometryNode, m_view);
-
-
-		// // Get the BatchInfo corresponding to the GeometryNode's unique MeshId.
-		// BatchInfo batchInfo = m_batchInfoMap[geometryNode->meshId];
-
-		// //-- Now render the mesh:
-		// m_shader.enable();
-		// glDrawArrays(GL_TRIANGLES, batchInfo.startIndex, batchInfo.numIndices);
-		// m_shader.disable();
-	// }
-
+	root.draw(glm::mat4(1.0f), m_view, m_geometryPass, m_batchInfoMap);
 	glBindVertexArray(0);
-	CHECK_GL_ERRORS;
+
+	m_gBuffer.unbind();
+
+	// Lighting pass
+	m_gBuffer.draw(m_lightingPass);
 }
 
 //----------------------------------------------------------------------------------------
