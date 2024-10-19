@@ -85,6 +85,8 @@ void A3::init()
 
 	initLightSources();
 
+	m_rootNode->storeInitialTrans();
+	reset();
 	// Exiting the current scope calls delete automatically on meshConsolidator freeing
 	// all vertex data resources.  This is fine since we already copied this data to
 	// VBOs on the GPU.  We have no use for storing vertex data on the CPU side beyond
@@ -259,7 +261,7 @@ void A3::initViewMatrix() {
 void A3::initLightSources() {
 	// World-space position
 	m_light.position = vec3(10.0f, 10.0f, 10.0f);
-	m_light.rgbIntensity = vec3(0.5f); // light
+	m_light.rgbIntensity = vec3(1.0f); // light
 }
 
 //----------------------------------------------------------------------------------------
@@ -326,9 +328,18 @@ void A3::guiLogic()
 	ImGui::Begin("Properties", &showDebugWindow, ImVec2(100,100), opacity,
 			windowFlags);
 
-
 		// Add more gui elements here here ...
+		ImGui::Checkbox("Enable Circle", &m_enableCircle);
+		ImGui::Checkbox("Enable Z-Buffer", &m_enableZBuffer);
+		ImGui::Checkbox("Enable Backface Culling", &m_enableBackFaceCull);
+		ImGui::Checkbox("Enable Frontface Culling", &m_enableFrontFaceCull);
 
+		ImGui::RadioButton("Orientation", (int*)&m_controlMode, ControlMode::ORIENTATION);
+		ImGui::RadioButton("Joints", (int*)&m_controlMode, ControlMode::JOINTS);
+
+		if (ImGui::Button("Reset")) {
+			reset();
+		}
 
 		// Create Button, and check if it was clicked:
 		if( ImGui::Button( "Quit Application" ) ) {
@@ -378,12 +389,34 @@ void A3::guiLogic()
  * Called once per frame, after guiLogic().
  */
 void A3::draw() {
+	if(m_enableZBuffer) 
+		glEnable(GL_DEPTH_TEST);
+	else 
+		glDisable(GL_DEPTH_TEST);
+	
+	if(m_enableBackFaceCull || m_enableFrontFaceCull) {
+		glEnable(GL_CULL_FACE);
+		if(m_enableBackFaceCull && m_enableFrontFaceCull) {
+			glCullFace(GL_FRONT_AND_BACK);
+		}
+		else if(m_enableBackFaceCull) {
+			glCullFace(GL_BACK);
+		}
+		else {
+			glCullFace(GL_FRONT);
+		}
+	}
+	else {
+		glDisable(GL_CULL_FACE);
+	}
 
-	glEnable( GL_DEPTH_TEST );
+
 	renderSceneGraph(*m_rootNode);
 
-	glDisable( GL_DEPTH_TEST );
-	renderArcCircle();
+	if(m_enableCircle) {
+		glDisable( GL_DEPTH_TEST );
+		renderArcCircle();
+	}
 }
 
 //----------------------------------------------------------------------------------------
@@ -484,7 +517,35 @@ bool A3::mouseMoveEvent (
 	bool eventHandled(false);
 
 	// Fill in with event handling code...
+	double deltaX = xPos - prevXPos;
+	double deltaY = yPos - prevYPos;
+	
+	if( m_controlMode == ControlMode::ORIENTATION ) {
+		if(m_mouseLeftPressed){
+			vec3 translation(deltaX * 0.01f, -deltaY * 0.01f, 0.0f);
+			m_rootNode->translate(translation);
+		}
+		else if(m_mouseMiddlePressed){
+			vec3 translation(0.0f, 0.0f, -deltaY * 0.01f);
+			m_rootNode->translate(translation);
+		}
+		else if(m_mouseRightPressed){
+			float angleX = deltaX * 0.5f;
+			float angleY = deltaY * 0.5f;
 
+			if(m_insideCircle){
+				m_rootNode->rotate('y', angleX);
+				m_rootNode->rotate('x', angleY);
+			}
+			else{
+				m_rootNode->rotate('z', angleY);
+			}
+		}
+	}
+
+	prevXPos = xPos;
+	prevYPos = yPos;
+	eventHandled = true;
 	return eventHandled;
 }
 
@@ -500,6 +561,52 @@ bool A3::mouseButtonInputEvent (
 	bool eventHandled(false);
 
 	// Fill in with event handling code...
+	if( actions == GLFW_PRESS ) {
+		double xpos, ypos;
+		glfwGetCursorPos(m_window, &xpos, &ypos);
+
+		prevXPos = xpos;
+		prevYPos = ypos;
+
+		if( button == GLFW_MOUSE_BUTTON_LEFT ) {
+			m_mouseLeftPressed = true;
+		}
+		else if( button == GLFW_MOUSE_BUTTON_RIGHT ) {
+			m_mouseRightPressed = true;
+
+			// check if mouse inside circle
+			float x = (2.0f * prevXPos) / m_framebufferWidth - 1.0f;
+			float y = 1.0f - (2.0f * prevYPos) / m_framebufferHeight;
+
+			float aspect = float(m_framebufferWidth) / float(m_framebufferHeight);
+			if (aspect > 1.0f) {
+				x *= aspect;
+			} else {
+				y /= aspect;
+			}
+
+			float distance = sqrt(x * x + y * y);
+			if (distance <= 0.5f) {
+				m_insideCircle = true;
+			} else {
+				m_insideCircle = false;
+			}
+		}
+		else if( button == GLFW_MOUSE_BUTTON_MIDDLE ) {
+			m_mouseMiddlePressed = true;
+		}
+	}
+	else if( actions == GLFW_RELEASE ) {
+		if( button == GLFW_MOUSE_BUTTON_LEFT ) {
+			m_mouseLeftPressed = false;
+		}
+		else if( button == GLFW_MOUSE_BUTTON_RIGHT ) {
+			m_mouseRightPressed = false;
+		}
+		else if( button == GLFW_MOUSE_BUTTON_MIDDLE ) {
+			m_mouseMiddlePressed = false;
+		}
+	}
 
 	return eventHandled;
 }
@@ -552,4 +659,19 @@ bool A3::keyInputEvent (
 	// Fill in with event handling code...
 
 	return eventHandled;
+}
+
+//----------------------------------------------------------------------------------------
+void A3::resetControls(){
+	m_enableCircle = true;
+	m_enableZBuffer = true;
+	m_enableBackFaceCull = false;
+	m_enableFrontFaceCull = false;
+
+	m_controlMode = ControlMode::ORIENTATION;
+}
+
+void A3::reset(){
+	resetControls();
+	m_rootNode->restoreInitialTrans();
 }

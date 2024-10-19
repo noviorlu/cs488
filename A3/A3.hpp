@@ -79,4 +79,26 @@ protected:
 	std::string m_luaSceneFile;
 
 	std::shared_ptr<SceneNode> m_rootNode;
+
+	// Control Stuffs----------------------------------------------------------------------------------------
+	bool m_enableCircle;
+	bool m_enableZBuffer;
+	bool m_enableBackFaceCull;
+	bool m_enableFrontFaceCull;
+
+	void resetControls();
+
+	enum ControlMode {
+		ORIENTATION,
+		JOINTS
+	};
+
+	ControlMode m_controlMode;
+	double prevXPos, prevYPos;
+	bool m_mouseLeftPressed;
+	bool m_mouseMiddlePressed;
+	bool m_mouseRightPressed;
+	bool m_insideCircle;
+	void reset();
+
 };
