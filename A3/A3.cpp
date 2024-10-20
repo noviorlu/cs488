@@ -288,25 +288,26 @@ void A3::initLightSources() {
 	// setup a simple point light
 	LightSource light;
 	light.position = vec3(3.0f, 3.0f, 3.0f);
-	light.rgbIntensity = vec3(0.5f); // light
+	light.rgbIntensity = vec3(0.8f); // light
 	m_lights.push_back(light);
 }
 
 //----------------------------------------------------------------------------------------
 void A3::uploadCommonSceneUniforms() {
+	int pick = 0;
+	if(m_controlMode == ControlMode::JOINTS) pick = m_rootNode->totalSceneNodes();
 	m_geometryPass.enable();
 	{
 		//-- Set Perpsective matrix uniform for the scene:
 		m_geometryPass.SetUniformMat4f("Perspective", m_perpsective);
-		m_geometryPass.SetUniform1i("pickMode", m_controlMode);
+		m_geometryPass.SetUniform1i("pickMode", pick);
 		CHECK_GL_ERRORS;
 	}
 	m_geometryPass.disable();
 
 	m_lightingPass.enable();
 	{
-		m_lightingPass.SetUniform1i("pickMode", m_controlMode);
-
+		m_lightingPass.SetUniform1i("pickMode", pick);
 		m_lightingPass.SetUniformMat4f("View", m_view);
 		
 		m_lightingPass.SetUniform1i("gPosition", 0);
@@ -543,6 +544,10 @@ bool A3::mouseMoveEvent (
 		}
 	}
 
+	if( m_controlMode == ControlMode::JOINTS && !m_mouseLeftPressed ) {
+
+	}
+
 	prevXPos = xPos;
 	prevYPos = yPos;
 	eventHandled = true;
@@ -570,6 +575,16 @@ bool A3::mouseButtonInputEvent (
 
 		if( button == GLFW_MOUSE_BUTTON_LEFT ) {
 			m_mouseLeftPressed = true;
+
+			if(m_controlMode == ControlMode::JOINTS) {
+				// get color from cursor position
+				glReadBuffer(GL_BACK);
+				unsigned char pixel[4];
+				glReadPixels(xpos, m_framebufferHeight - ypos, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixel);
+				int pickedID = pixel[0] / 255.0 * m_rootNode->totalSceneNodes();
+				std::cout << "Picked ID: " << pickedID << std::endl;
+			}
+
 		}
 		else if( button == GLFW_MOUSE_BUTTON_RIGHT ) {
 			m_mouseRightPressed = true;

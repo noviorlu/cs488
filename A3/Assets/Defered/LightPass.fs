@@ -38,7 +38,7 @@ void main() {
     }
 
     // nodeID when picking mode
-    if(pickMode == 1){
+    if(pickMode != 0){
         FragColor = Albedo;
         return;
     }

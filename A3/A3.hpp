@@ -13,6 +13,7 @@
 #include <glm/glm.hpp>
 #include <memory>
 #include <vector>
+#include <cmath>
 
 struct LightSource {
 	glm::vec3 position;
@@ -112,4 +113,5 @@ protected:
 	bool m_insideCircle;
 	void reset();
 
+	SceneNode* selectedNode;
 };
