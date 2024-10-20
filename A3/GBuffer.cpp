@@ -4,7 +4,7 @@
 GBuffer::GBuffer() 
     : width(0), height(0), 
     gBuffer(0), gPosition(0), 
-    gNormal(0), gAlbedoID(0), 
+    geoNormal(0), gAlbedoID(0), 
     rboDepth(0) 
 {
     
@@ -13,7 +13,7 @@ GBuffer::GBuffer()
 GBuffer::~GBuffer() {
     glDeleteFramebuffers(1, &gBuffer);
     glDeleteTextures(1, &gPosition);
-    glDeleteTextures(1, &gNormal);
+    glDeleteTextures(1, &geoNormal);
     glDeleteTextures(1, &gAlbedoID);
     glDeleteRenderbuffers(1, &rboDepth);
 }
@@ -32,12 +32,12 @@ bool GBuffer::initialize(float width, float height) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPosition, 0);
 
-    glGenTextures(1, &gNormal);
-    glBindTexture(GL_TEXTURE_2D, gNormal);
+    glGenTextures(1, &geoNormal);
+    glBindTexture(GL_TEXTURE_2D, geoNormal);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, geoNormal, 0);
 
     glGenTextures(1, &gAlbedoID);
     glBindTexture(GL_TEXTURE_2D, gAlbedoID);
@@ -92,6 +92,15 @@ void GBuffer::initQuad(){
 
 void GBuffer::draw(ShaderProgram& shader) const {
     shader.enable();
+
+    glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, gPosition);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, geoNormal);
+
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, gAlbedoID);
 
 	glBindVertexArray(m_vao_quad);
     glDrawArrays(GL_TRIANGLES, 0, 6);

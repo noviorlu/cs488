@@ -18,13 +18,13 @@ public:
     void drawDepth() const;
 
     GLuint getPositionTexture() const { return gPosition; }
-    GLuint getNormalTexture() const { return gNormal; }
+    GLuint getNormalTexture() const { return geoNormal; }
     GLuint getAlbedoIDTexture() const { return gAlbedoID; }
     GLuint getDepthTexture() const { return rboDepth; }
 
 public:
     GLuint gBuffer;
-    GLuint gPosition, gNormal, gAlbedoID, rboDepth;
+    GLuint gPosition, geoNormal, gAlbedoID, rboDepth;
     int width, height;
 
     GLuint m_vbo_quad;

@@ -87,10 +87,10 @@ void A3::init()
 
 	initViewMatrix();
 
-	initLightSources();
-
 	m_rootNode->storeInitialTrans();
 	reset();
+
+	initLightSources();
 
 	m_gBuffer.initialize(m_framebufferWidth, m_framebufferHeight);
 	// Exiting the current scope calls delete automatically on meshConsolidator freeing
@@ -119,13 +119,13 @@ void A3::processLuaSceneFile(const std::string & filename) {
 void A3::createShaderProgram()
 {
 	m_geometryPass.generateProgramObject();
-	m_geometryPass.attachVertexShader( getAssetFilePath("Deffered/GeometryPass.vs").c_str() );
-	m_geometryPass.attachFragmentShader( getAssetFilePath("Deffered/GeometryPass.fs").c_str() );
+	m_geometryPass.attachVertexShader( getAssetFilePath("Defered/GeometryPass.vs").c_str() );
+	m_geometryPass.attachFragmentShader( getAssetFilePath("Defered/GeometryPass.fs").c_str() );
 	m_geometryPass.link();
 
 	m_lightingPass.generateProgramObject();
-	m_lightingPass.attachVertexShader( getAssetFilePath("Deffered/LightPass.vs").c_str() );
-	m_lightingPass.attachFragmentShader( getAssetFilePath("Deffered/LightPass.fs").c_str() );
+	m_lightingPass.attachVertexShader( getAssetFilePath("Defered/LightPass.vs").c_str() );
+	m_lightingPass.attachFragmentShader( getAssetFilePath("Defered/LightPass.fs").c_str() );
 	m_lightingPass.link();
 
 	m_shader_arcCircle.generateProgramObject();
@@ -266,17 +266,30 @@ void A3::initViewMatrix() {
 
 //----------------------------------------------------------------------------------------
 void A3::initLightSources() {
-	// World-space position
-	for (int x = -1; x <= 1; x += 2) {
-		for (int y = -1; y <= 1; y += 2) {
-			for (int z = -1; z <= 1; z += 2) {
-				LightSource light;
-				light.position = vec3(5.0f * x, 5.0f * y, 5.0f * z);
-				light.rgbIntensity = vec3(0.2f + 0.1f * (x + 1), 0.2f + 0.1f * (y + 1), 0.2f + 0.1f * (z + 1)); // dimmer light color
-				m_lights.push_back(light);
-			}
-		}
-	}
+    // World-space position
+    // for (int x = -1; x <= 1; x += 2) {
+    //     for (int y = -1; y <= 1; y += 2) {
+    //         for (int z = -1; z <= 1; z += 2) {
+    //             LightSource light;
+    //             light.position = vec3(5.0f * x, 5.0f * y, 5.0f * z);
+    //             light.position = glm::vec3(m_rootNode->get_transform() * glm::vec4(light.position, 1.0f));
+
+    //             if (x < 0) {
+    //                 light.rgbIntensity = vec3(0.17, 0.64, 0.85) * 0.5f;
+    //             } else {
+    //                 light.rgbIntensity = vec3(0.81, 0.57, 0.05) * 0.5f;
+    //             }
+
+    //             m_lights.push_back(light);
+    //         }
+    //     }
+    // }
+
+	// setup a simple point light
+	LightSource light;
+	light.position = vec3(3.0f, 3.0f, 3.0f);
+	light.rgbIntensity = vec3(0.5f); // light
+	m_lights.push_back(light);
 }
 
 //----------------------------------------------------------------------------------------
@@ -284,48 +297,32 @@ void A3::uploadCommonSceneUniforms() {
 	m_geometryPass.enable();
 	{
 		//-- Set Perpsective matrix uniform for the scene:
-		m_geometryPass.SetUniformMat4f("View", m_view);
+		m_geometryPass.SetUniformMat4f("Perspective", m_perpsective);
 	}
 	m_geometryPass.disable();
 
-	// m_lightingPass.enable();
-	// {
-	// 	if(loc_gPosition == -1)
-	// 		loc_gPosition = m_lightingPass.getUniformLocation("gPosition");
-    // 	glUniform1i(loc_gPosition, 0);
+	m_lightingPass.enable();
+	{
+		m_lightingPass.SetUniformMat4f("View", m_view);
+		
+		m_lightingPass.SetUniform1i("gPosition", 0);
+		m_lightingPass.SetUniform1i("geoNormal", 1);
+		m_lightingPass.SetUniform1i("gAlbedoID", 2);
 
-	// 	if(loc_gNormal == -1)
-	// 		loc_gNormal  = m_lightingPass.getUniformLocation("gNormal");
-    // 	glUniform1i(loc_gNormal, 1);
+		m_lightingPass.SetUniform1i("numLights", m_lights.size());
 
-	// 	if(loc_gAlbedoID == -1)
-	// 		loc_gAlbedoID = m_lightingPass.getUniformLocation("gAlbedoID");
-	// 	glUniform1i(loc_gAlbedoID, 2);
-	
+		for (int i = 0; i < m_lights.size(); ++i) {
+			std::string lightPosStr = "lightPositions[" + std::to_string(i) + "]";
+			auto &light = m_lights[i];
+			m_lightingPass.SetUniform3fv(lightPosStr.c_str(), light.position);
+		}
 
-	// 	// set the uniform for each light source
-	// 	if(loc_numLights == -1) 
-	// 		loc_numLights = m_lightingPass.getUniformLocation("numLights");
-	// 	glUniform1i(loc_numLights, m_lights.size());
-
-	// 	for (int i = 0; i < m_lights.size(); ++i) {
-	// 		std::string lightPosStr = "lights[" + std::to_string(i) + "].Position";
-	// 		std::string lightColorStr = "lights[" + std::to_string(i) + "].Color";
-
-	// 		auto &light = m_lights[i];
-
-	// 		if(light.loc_lightPos == -1) {
-	// 			light.loc_lightPos = m_lightingPass.getUniformLocation(lightPosStr.c_str());
-	// 		}
-	// 		if(light.loc_lightCol == -1) {
-	// 			light.loc_lightCol = m_lightingPass.getUniformLocation(lightColorStr.c_str());
-	// 		}
-
-	// 		glUniform3fv(light.loc_lightPos, 1, value_ptr(light.position));
-	// 		glUniform3fv(light.loc_lightCol, 1, value_ptr(light.rgbIntensity));
-	// 	}
-	// }
-
+		for (int i = 0; i < m_lights.size(); ++i) {
+			std::string lightColorStr = "lights[" + std::to_string(i) + "].Color";
+			auto &light = m_lights[i];
+			m_lightingPass.SetUniform3fv(lightColorStr.c_str(), light.rgbIntensity);
+		}
+	}
 	m_lightingPass.disable();
 }
 
@@ -372,6 +369,13 @@ void A3::guiLogic()
 		ImGui::RadioButton("Orientation", (int*)&m_controlMode, ControlMode::ORIENTATION);
 		ImGui::RadioButton("Joints", (int*)&m_controlMode, ControlMode::JOINTS);
 
+		// Modify lightsource positions & color
+		for (int i = 0; i < m_lights.size(); ++i) {
+			std::string lightPosStr = "Light " + std::to_string(i);
+			ImGui::SliderFloat3(lightPosStr.c_str(), &m_lights[i].position.x, -10.0f, 10.0f);
+			ImGui::ColorEdit3(lightPosStr.c_str(), &m_lights[i].rgbIntensity.x);
+		}
+
 		if (ImGui::Button("Reset")) {
 			reset();
 		}
@@ -379,6 +383,12 @@ void A3::guiLogic()
 		// Create Button, and check if it was clicked:
 		if( ImGui::Button( "Quit Application" ) ) {
 			glfwSetWindowShouldClose(m_window, GL_TRUE);
+		}
+
+		if (ImGui::IsAnyItemHovered()) {
+			m_mouseLeftPressed = false;
+			m_mouseMiddlePressed = false;
+			m_mouseRightPressed = false;
 		}
 
 		ImGui::Text( "Framerate: %.1f FPS", ImGui::GetIO().Framerate );
@@ -439,19 +449,6 @@ void A3::renderSceneGraph(const SceneNode & root) {
 
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, m_gBuffer.gPosition);
-	m_lightingPass.SetUniform1i("gPosition", 0);
-
-
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, m_gBuffer.gNormal);
-	m_lightingPass.SetUniform1i("gNormal", 1);
-
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, m_gBuffer.gAlbedoID);
-	m_lightingPass.SetUniform1i("gAlbedoID", 2);
 
 	m_gBuffer.draw(m_lightingPass);
 	CHECK_GL_ERRORS;
@@ -668,6 +665,10 @@ void A3::resetControls(){
 	m_enableFrontFaceCull = false;
 
 	m_controlMode = ControlMode::ORIENTATION;
+
+	m_mouseLeftPressed = false;
+	m_mouseMiddlePressed = false;
+	m_mouseRightPressed = false;
 }
 
 void A3::reset(){

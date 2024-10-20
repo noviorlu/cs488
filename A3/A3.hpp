@@ -17,9 +17,6 @@
 struct LightSource {
 	glm::vec3 position;
 	glm::vec3 rgbIntensity;
-
-	GLint loc_lightPos = -1;
-	GLint loc_lightCol = -1;
 };
 
 
