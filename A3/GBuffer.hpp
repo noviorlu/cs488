@@ -15,13 +15,14 @@ public:
     void unbind() const;
     bool initialize(float width, float height);
     void draw(ShaderProgram &shader) const;
+    void drawDepth() const;
 
     GLuint getPositionTexture() const { return gPosition; }
     GLuint getNormalTexture() const { return gNormal; }
     GLuint getAlbedoIDTexture() const { return gAlbedoID; }
     GLuint getDepthTexture() const { return rboDepth; }
 
-private:
+public:
     GLuint gBuffer;
     GLuint gPosition, gNormal, gAlbedoID, rboDepth;
     int width, height;

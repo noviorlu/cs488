@@ -50,7 +50,7 @@ A3::~A3()
 void A3::init()
 {
 	// Set the background colour.
-	glClearColor(0.2, 0.5, 0.3, 1.0);
+	glClearColor(0.0, 0.0, 0.0, 1.0);
 
 	createShaderProgram();
 
@@ -114,11 +114,6 @@ void A3::processLuaSceneFile(const std::string & filename) {
 //----------------------------------------------------------------------------------------
 void A3::createShaderProgram()
 {
-	// m_shader.generateProgramObject();
-	// m_shader.attachVertexShader( getAssetFilePath("Phong.vs").c_str() );
-	// m_shader.attachFragmentShader( getAssetFilePath("Phong.fs").c_str() );
-	// m_shader.link();
-
 	m_geometryPass.generateProgramObject();
 	m_geometryPass.attachVertexShader( getAssetFilePath("Deffered/GeometryPass.vs").c_str() );
 	m_geometryPass.attachFragmentShader( getAssetFilePath("Deffered/GeometryPass.fs").c_str() );
@@ -268,39 +263,20 @@ void A3::initViewMatrix() {
 //----------------------------------------------------------------------------------------
 void A3::initLightSources() {
 	// World-space position
-	m_light.position = vec3(10.0f, 10.0f, 10.0f);
-	m_light.rgbIntensity = vec3(1.0f); // light
+	for (int x = -1; x <= 1; x += 2) {
+		for (int y = -1; y <= 1; y += 2) {
+			for (int z = -1; z <= 1; z += 2) {
+				LightSource light;
+				light.position = vec3(5.0f * x, 5.0f * y, 5.0f * z);
+				light.rgbIntensity = vec3(0.2f + 0.1f * (x + 1), 0.2f + 0.1f * (y + 1), 0.2f + 0.1f * (z + 1)); // dimmer light color
+				m_lights.push_back(light);
+			}
+		}
+	}
 }
 
 //----------------------------------------------------------------------------------------
 void A3::uploadCommonSceneUniforms() {
-	// m_shader.enable();
-	// {
-	// 	//-- Set Perpsective matrix uniform for the scene:
-	// 	GLint location = m_shader.getUniformLocation("Perspective");
-	// 	glUniformMatrix4fv(location, 1, GL_FALSE, value_ptr(m_perpsective));
-	// 	CHECK_GL_ERRORS;
-
-
-	// 	//-- Set LightSource uniform for the scene:
-	// 	{
-	// 		location = m_shader.getUniformLocation("light.position");
-	// 		glUniform3fv(location, 1, value_ptr(m_light.position));
-	// 		location = m_shader.getUniformLocation("light.rgbIntensity");
-	// 		glUniform3fv(location, 1, value_ptr(m_light.rgbIntensity));
-	// 		CHECK_GL_ERRORS;
-	// 	}
-
-	// 	//-- Set background light ambient intensity
-	// 	{
-	// 		location = m_shader.getUniformLocation("ambientIntensity");
-	// 		vec3 ambientIntensity(0.25f);
-	// 		glUniform3fv(location, 1, value_ptr(ambientIntensity));
-	// 		CHECK_GL_ERRORS;
-	// 	}
-	// }
-	// m_shader.disable();
-
 	m_geometryPass.enable();
 	{
 		//-- Set Perpsective matrix uniform for the scene:
@@ -311,14 +287,40 @@ void A3::uploadCommonSceneUniforms() {
 
 	m_lightingPass.enable();
 	{
-		// GLint loc_gPosition = m_lightingPass.getUniformLocation("gPosition");
-    	// glUniform1i(loc_gPosition, 0);
+		if(loc_gPosition == -1)
+			loc_gPosition = m_lightingPass.getUniformLocation("gPosition");
+    	glUniform1i(loc_gPosition, 0);
 
-		// GLint loc_gNormal  = m_lightingPass.getUniformLocation("gNormal");
-    	// glUniform1i(loc_gNormal, 1);
-		
-		GLint loc_gAlbedoID = m_lightingPass.getUniformLocation("gAlbedoID");
+		if(loc_gNormal == -1)
+			loc_gNormal  = m_lightingPass.getUniformLocation("gNormal");
+    	glUniform1i(loc_gNormal, 1);
+
+		if(loc_gAlbedoID == -1)
+			loc_gAlbedoID = m_lightingPass.getUniformLocation("gAlbedoID");
 		glUniform1i(loc_gAlbedoID, 2);
+	
+
+		// set the uniform for each light source
+		if(loc_numLights == -1) 
+			loc_numLights = m_lightingPass.getUniformLocation("numLights");
+		glUniform1i(loc_numLights, m_lights.size());
+
+		for (int i = 0; i < m_lights.size(); ++i) {
+			std::string lightPosStr = "lights[" + std::to_string(i) + "].Position";
+			std::string lightColorStr = "lights[" + std::to_string(i) + "].Color";
+
+			auto &light = m_lights[i];
+
+			if(light.loc_lightPos == -1) {
+				light.loc_lightPos = m_lightingPass.getUniformLocation(lightPosStr.c_str());
+			}
+			if(light.loc_lightCol == -1) {
+				light.loc_lightCol = m_lightingPass.getUniformLocation(lightColorStr.c_str());
+			}
+
+			glUniform3fv(light.loc_lightPos, 1, value_ptr(light.position));
+			glUniform3fv(light.loc_lightCol, 1, value_ptr(light.rgbIntensity));
+		}
 	}
 
 	m_lightingPass.disable();
@@ -386,6 +388,20 @@ void A3::guiLogic()
  * Called once per frame, after guiLogic().
  */
 void A3::draw() {
+	renderSceneGraph(*m_rootNode);
+
+	if(m_enableCircle) {
+		renderArcCircle();
+	}
+}
+
+//----------------------------------------------------------------------------------------
+void A3::renderSceneGraph(const SceneNode & root) {
+	// Geometry pass	
+	m_gBuffer.bind();
+	glClearColor(0.0, 0.0, 0.0, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	
 	if(m_enableZBuffer) 
 		glEnable(GL_DEPTH_TEST);
 	else 
@@ -407,29 +423,35 @@ void A3::draw() {
 		glDisable(GL_CULL_FACE);
 	}
 
-
-	renderSceneGraph(*m_rootNode);
-
-	if(m_enableCircle) {
-		glDisable( GL_DEPTH_TEST );
-		renderArcCircle();
-	}
-}
-
-//----------------------------------------------------------------------------------------
-void A3::renderSceneGraph(const SceneNode & root) {
-	// Geometry pass	
-	m_gBuffer.bind();
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
 	glBindVertexArray(m_vao_meshData);
 	root.draw(glm::mat4(1.0f), m_view, m_geometryPass, m_batchInfoMap);
 	glBindVertexArray(0);
 
 	m_gBuffer.unbind();
-
 	// Lighting pass
+
+	m_lightingPass.enable();
+
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_CULL_FACE);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_gBuffer.gPosition);
+	glUniform1i(m_lightingPass.getUniformLocation("gPosition"), 0);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, m_gBuffer.gNormal);
+	glUniform1i(m_lightingPass.getUniformLocation("gNormal"), 1);
+
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, m_gBuffer.gAlbedoID);
+	glUniform1i(m_lightingPass.getUniformLocation("gAlbedoID"), 2);
+
 	m_gBuffer.draw(m_lightingPass);
+
+	m_lightingPass.disable();
+
+	// m_gBuffer.drawDepth();
 }
 
 //----------------------------------------------------------------------------------------

@@ -12,10 +12,14 @@
 
 #include <glm/glm.hpp>
 #include <memory>
+#include <vector>
 
 struct LightSource {
 	glm::vec3 position;
 	glm::vec3 rgbIntensity;
+
+	GLint loc_lightPos = -1;
+	GLint loc_lightCol = -1;
 };
 
 
@@ -56,7 +60,12 @@ protected:
 	glm::mat4 m_perpsective;
 	glm::mat4 m_view;
 
-	LightSource m_light;
+	std::vector<LightSource> m_lights;
+	GLint loc_numLights = -1;
+	GLint loc_gPosition = -1;
+	GLint loc_gNormal = -1;
+	GLint loc_gAlbedoID = -1;
+
 
 	//-- GL resources for mesh geometry data:
 	GLuint m_vao_meshData;
@@ -64,7 +73,6 @@ protected:
 	GLuint m_vbo_vertexNormals;
 	GLint m_positionAttribLocation;
 	GLint m_normalAttribLocation;
-	ShaderProgram m_shader;
 
 	//-- GL resources for trackball circle geometry:
 	GLuint m_vbo_arcCircle;
