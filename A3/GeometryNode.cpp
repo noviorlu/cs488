@@ -29,24 +29,19 @@ void GeometryNode::draw(
 	shader.enable();
 	
 	//-- Set ModelView matrix:
-	GLint location = shader.getUniformLocation("ModelView");
 	mat4 modelView = viewMatrix * modelMatrix * trans;
-	glUniformMatrix4fv(location, 1, GL_FALSE, value_ptr(modelView));
+	shader.SetUniformMat4f("ModelView", modelView);
 
 	//-- Set NormMatrix:
-	location = shader.getUniformLocation("NormalMatrix");
 	mat3 normalMatrix = glm::transpose(glm::inverse(mat3(modelView)));
-	glUniformMatrix3fv(location, 1, GL_FALSE, value_ptr(normalMatrix));
+	shader.SetUniformMat3f("NormalMatrix", normalMatrix);
 
 	//-- Set Material values:
-	location = shader.getUniformLocation("material.kd");
 	vec3 kd = material.kd;
-	glUniform3fv(location, 1, value_ptr(kd));
-
+	shader.SetUniform3fv("material.kd", kd);
+ 
 	//-- Set SceneNode ID:
-	location = shader.getUniformLocation("nodeId");
-	float id = (float)m_nodeId;
-	glUniform1f(location, id);
+	shader.SetUniform1i("nodeId", m_nodeId);
 
 	BatchInfo batchInfo = modelBatch[meshId];
 

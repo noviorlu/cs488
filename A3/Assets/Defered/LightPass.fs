@@ -13,15 +13,33 @@ struct Light {
 };
 
 uniform int numLights;
+uniform int pickMode;
 uniform Light lights[10];
+
+vec4 intToColor(int picker) {
+    float r = float((picker >> 24) & 0xFF) / 255.0;
+    float g = float((picker >> 16) & 0xFF) / 255.0;
+    float b = float((picker >> 8) & 0xFF) / 255.0;
+    float a = float(picker & 0xFF) / 255.0;
+    return vec4(r, g, b, a);
+}
 
 void main() {
     vec4 FragPos = texture(gPosition, TexCoords).rgba;
     vec4 Normal = texture(geoNormal, TexCoords).rgba;
     vec4 Albedo = texture(gAlbedoID, TexCoords).rgba;
 
+    FragColor = Albedo;
+
+    // depth testing
     if(FragPos.a == 1.0){
         FragColor = vec4(0.0);
+        return;
+    }
+
+    // nodeID when picking mode
+    if(pickMode == 1){
+        FragColor = Albedo;
         return;
     }
 

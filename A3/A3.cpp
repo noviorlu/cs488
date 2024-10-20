@@ -298,17 +298,21 @@ void A3::uploadCommonSceneUniforms() {
 	{
 		//-- Set Perpsective matrix uniform for the scene:
 		m_geometryPass.SetUniformMat4f("Perspective", m_perpsective);
+		m_geometryPass.SetUniform1i("pickMode", m_controlMode);
+		CHECK_GL_ERRORS;
 	}
 	m_geometryPass.disable();
 
 	m_lightingPass.enable();
 	{
+		m_lightingPass.SetUniform1i("pickMode", m_controlMode);
+
 		m_lightingPass.SetUniformMat4f("View", m_view);
 		
 		m_lightingPass.SetUniform1i("gPosition", 0);
 		m_lightingPass.SetUniform1i("geoNormal", 1);
 		m_lightingPass.SetUniform1i("gAlbedoID", 2);
-
+		CHECK_GL_ERRORS;
 		m_lightingPass.SetUniform1i("numLights", m_lights.size());
 
 		for (int i = 0; i < m_lights.size(); ++i) {

@@ -34,21 +34,21 @@ public:
 
     GLuint getProgramObject() const;
 
+    // external / internal (Error/Warning)
     GLint getUniformLocation(const std::string& uniformName) const;
-    // Set uniforms
-    void SetUniform1i(const std::string& name, int value);
-    void SetUniform1iv(const std::string& name, int count, int* value);
-    void SetUniformMat4f(const std::string& name, const glm::mat4& matrix);
-    void SetUniform4fv(const std::string& name, const glm::vec4& value);
-    void SetUniform4f(const std::string& name, float v0, float v1, float v2, float v3);
-    void SetUniform3fv(const std::string& name, const glm::vec3& value);
-    void SetUniform3f(const std::string& name, float v0, float v1, float v2);
-    void SetUniform1f(const std::string& name, float value);
+    GLint GetUniformLocation(const std::string& uniformName) const;
+
+    void SetUniform1i(const std::string& name, int value) const;
+    void SetUniform1iv(const std::string& name, int count, int* value) const;
+    void SetUniformMat4f(const std::string& name, const glm::mat4& matrix) const;
+    void SetUniformMat3f(const std::string& name, const glm::mat3& matrix) const;
+    void SetUniform4fv(const std::string& name, const glm::vec4& value) const;
+    void SetUniform4f(const std::string& name, float v0, float v1, float v2, float v3) const;
+    void SetUniform3fv(const std::string& name, const glm::vec3& value) const;
+    void SetUniform3f(const std::string& name, float v0, float v1, float v2) const;
+    void SetUniform1f(const std::string& name, float value) const;
 
     GLint getAttribLocation(const char * attributeName) const;
-
-
-private:
     struct Shader {
         GLuint shaderObject;
         std::string filePath;
