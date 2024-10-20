@@ -242,18 +242,61 @@ GLuint ShaderProgram::getProgramObject() const {
  * Returns the location value of a uniform variable within the shader program.
  */
 GLint ShaderProgram::getUniformLocation (
-		const char * uniformName
+		const std::string& uniformName
 ) const {
-    GLint result = glGetUniformLocation(programObject, (const GLchar *)uniformName);
+    if (m_UniformLocationCache.find(uniformName) != m_UniformLocationCache.end())
+	    return m_UniformLocationCache[uniformName];
+
+    GLint result = glGetUniformLocation(programObject, uniformName.c_str());
 
     if (result == -1) {
-        stringstream errorMessage;
-        errorMessage << "Error obtaining uniform location: " << uniformName;
-        throw ShaderException(errorMessage.str());
+        std::cout << "Warning: uniform [" << uniformName << "] doesn't exist!" << std::endl;
     }
 
+    m_UniformLocationCache[uniformName] = result;
     return result;
 }
+
+void ShaderProgram::SetUniform1i(const std::string& name, int value)
+{
+	glUniform1i(getUniformLocation(name), value);
+}
+
+void ShaderProgram::SetUniform1iv(const std::string& name, int count, int* value)
+{
+	glUniform1iv(getUniformLocation(name), count, value);
+}
+
+void ShaderProgram::SetUniformMat4f(const std::string& name, const glm::mat4& matrix)
+{
+	glUniformMatrix4fv(getUniformLocation(name), 1, GL_FALSE, &matrix[0][0]);
+}
+
+void ShaderProgram::SetUniform4fv(const std::string& name, const glm::vec4& value)
+{
+	glUniform4fv(getUniformLocation(name), 1, &value[0]);
+}
+
+void ShaderProgram::SetUniform4f(const std::string& name, float v0, float v1, float v2, float v3)
+{
+	glUniform4f(getUniformLocation(name), v0, v1, v2, v3);
+}
+
+void ShaderProgram::SetUniform3fv(const std::string& name, const glm::vec3& value)
+{
+	glUniform3fv(getUniformLocation(name), 1, &value[0]);
+}
+
+void ShaderProgram::SetUniform3f(const std::string& name, float v0, float v1, float v2)
+{
+	glUniform3f(getUniformLocation(name), v0, v1, v2);
+}
+
+void ShaderProgram::SetUniform1f(const std::string& name, float value)
+{
+	glUniform1f(getUniformLocation(name), value);
+}
+
 
 //------------------------------------------------------------------------------------
 /*

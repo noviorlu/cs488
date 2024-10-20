@@ -14,6 +14,10 @@ using namespace std;
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/io.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <math.h>
+#ifndef M_PI
+    #define M_PI 3.14159265358979323846
+#endif
 
 using namespace glm;
 
@@ -280,48 +284,47 @@ void A3::uploadCommonSceneUniforms() {
 	m_geometryPass.enable();
 	{
 		//-- Set Perpsective matrix uniform for the scene:
-		GLint location = m_geometryPass.getUniformLocation("Perspective");
-		glUniformMatrix4fv(location, 1, GL_FALSE, value_ptr(m_perpsective));
+		m_geometryPass.SetUniformMat4f("View", m_view);
 	}
 	m_geometryPass.disable();
 
-	m_lightingPass.enable();
-	{
-		if(loc_gPosition == -1)
-			loc_gPosition = m_lightingPass.getUniformLocation("gPosition");
-    	glUniform1i(loc_gPosition, 0);
+	// m_lightingPass.enable();
+	// {
+	// 	if(loc_gPosition == -1)
+	// 		loc_gPosition = m_lightingPass.getUniformLocation("gPosition");
+    // 	glUniform1i(loc_gPosition, 0);
 
-		if(loc_gNormal == -1)
-			loc_gNormal  = m_lightingPass.getUniformLocation("gNormal");
-    	glUniform1i(loc_gNormal, 1);
+	// 	if(loc_gNormal == -1)
+	// 		loc_gNormal  = m_lightingPass.getUniformLocation("gNormal");
+    // 	glUniform1i(loc_gNormal, 1);
 
-		if(loc_gAlbedoID == -1)
-			loc_gAlbedoID = m_lightingPass.getUniformLocation("gAlbedoID");
-		glUniform1i(loc_gAlbedoID, 2);
+	// 	if(loc_gAlbedoID == -1)
+	// 		loc_gAlbedoID = m_lightingPass.getUniformLocation("gAlbedoID");
+	// 	glUniform1i(loc_gAlbedoID, 2);
 	
 
-		// set the uniform for each light source
-		if(loc_numLights == -1) 
-			loc_numLights = m_lightingPass.getUniformLocation("numLights");
-		glUniform1i(loc_numLights, m_lights.size());
+	// 	// set the uniform for each light source
+	// 	if(loc_numLights == -1) 
+	// 		loc_numLights = m_lightingPass.getUniformLocation("numLights");
+	// 	glUniform1i(loc_numLights, m_lights.size());
 
-		for (int i = 0; i < m_lights.size(); ++i) {
-			std::string lightPosStr = "lights[" + std::to_string(i) + "].Position";
-			std::string lightColorStr = "lights[" + std::to_string(i) + "].Color";
+	// 	for (int i = 0; i < m_lights.size(); ++i) {
+	// 		std::string lightPosStr = "lights[" + std::to_string(i) + "].Position";
+	// 		std::string lightColorStr = "lights[" + std::to_string(i) + "].Color";
 
-			auto &light = m_lights[i];
+	// 		auto &light = m_lights[i];
 
-			if(light.loc_lightPos == -1) {
-				light.loc_lightPos = m_lightingPass.getUniformLocation(lightPosStr.c_str());
-			}
-			if(light.loc_lightCol == -1) {
-				light.loc_lightCol = m_lightingPass.getUniformLocation(lightColorStr.c_str());
-			}
+	// 		if(light.loc_lightPos == -1) {
+	// 			light.loc_lightPos = m_lightingPass.getUniformLocation(lightPosStr.c_str());
+	// 		}
+	// 		if(light.loc_lightCol == -1) {
+	// 			light.loc_lightCol = m_lightingPass.getUniformLocation(lightColorStr.c_str());
+	// 		}
 
-			glUniform3fv(light.loc_lightPos, 1, value_ptr(light.position));
-			glUniform3fv(light.loc_lightCol, 1, value_ptr(light.rgbIntensity));
-		}
-	}
+	// 		glUniform3fv(light.loc_lightPos, 1, value_ptr(light.position));
+	// 		glUniform3fv(light.loc_lightCol, 1, value_ptr(light.rgbIntensity));
+	// 	}
+	// }
 
 	m_lightingPass.disable();
 }
@@ -422,10 +425,12 @@ void A3::renderSceneGraph(const SceneNode & root) {
 	else {
 		glDisable(GL_CULL_FACE);
 	}
+	CHECK_GL_ERRORS;
 
 	glBindVertexArray(m_vao_meshData);
 	root.draw(glm::mat4(1.0f), m_view, m_geometryPass, m_batchInfoMap);
 	glBindVertexArray(0);
+	CHECK_GL_ERRORS;
 
 	m_gBuffer.unbind();
 	// Lighting pass
@@ -437,18 +442,19 @@ void A3::renderSceneGraph(const SceneNode & root) {
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, m_gBuffer.gPosition);
-	glUniform1i(m_lightingPass.getUniformLocation("gPosition"), 0);
+	m_lightingPass.SetUniform1i("gPosition", 0);
+
 
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, m_gBuffer.gNormal);
-	glUniform1i(m_lightingPass.getUniformLocation("gNormal"), 1);
+	m_lightingPass.SetUniform1i("gNormal", 1);
 
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, m_gBuffer.gAlbedoID);
-	glUniform1i(m_lightingPass.getUniformLocation("gAlbedoID"), 2);
+	m_lightingPass.SetUniform1i("gAlbedoID", 2);
 
 	m_gBuffer.draw(m_lightingPass);
-
+	CHECK_GL_ERRORS;
 	m_lightingPass.disable();
 
 	// m_gBuffer.drawDepth();
