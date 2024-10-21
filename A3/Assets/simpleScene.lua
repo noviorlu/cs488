@@ -1,33 +1,40 @@
--- Simple Scene:
--- An extremely simple scene that will render right out of the box
--- with the provided skeleton code.  It doesn't rely on hierarchical
--- transformations.
+-- a3mark.lua
+-- A very simple scene creating a trivial hierarchical puppet.
+-- We'll use this scene as part of testing your assignment.
+-- See a3mark.png for an example of what this file produces.
 
--- Create the top level root node named 'root'.
-rootNode = gr.node('root')
+root = gr.node('root')
 
--- Create a GeometryNode with MeshId = 'cube', and name = 'torso'.
--- MeshId's must reference a .obj file that has been previously loaded into
--- the MeshConsolidator instance within A3::init().
-cubeMesh = gr.mesh('cube', 'name-of-cube')
-cubeMesh:scale(1.0, 1.0, 1.0)
-cubeMesh:rotate('y', 45.0)
-cubeMesh:translate(0.0, -0.5, -5.0)
-cubeMesh:set_material(gr.material({0.8, 0.2, 0.2}, {0.8, 0.8, 0.8}, 10.0))
+red = gr.material({1.0, 0.0, 0.0}, {0.1, 0.1, 0.1}, 10)
+blue = gr.material({0.0, 0.0, 1.0}, {0.1, 0.1, 0.1}, 10)
+green = gr.material({0.0, 1.0, 0.0}, {0.1, 0.1, 0.1}, 10)
+white = gr.material({1.0, 1.0, 1.0}, {0.1, 0.1, 0.1}, 10)
 
--- Add the cubeMesh GeometryNode to the child list of rootnode.
-rootNode:add_child(cubeMesh)
+joint1 = gr.joint('joint1', {-45, 0, 45}, {-45, 0, 45})
+root:add_child(joint1)
 
--- Create a GeometryNode with MeshId = 'sphere', and name = 'head'.
-sphereMesh = gr.mesh('sphere', 'name-of-sphere')
-sphereMesh:scale(0.5, 0.5, 0.5)
-sphereMesh:translate(0.0, 0.5, -5.0)
-sphereMesh:set_material(gr.material({0.4, 0.8, 0.4}, {0.8, 0.8, 0.8}, 50.0))
+s0 = gr.mesh('sphere','s0')
+joint1:add_child(s0)
+s0:set_material(white)
 
--- Add the sphereMesh GeometryNode to the child list of rootnode.
-rootNode:add_child(sphereMesh)
+s1 = gr.mesh('sphere','s1')
+joint1:add_child(s1)
+s1:scale(0.1, 2.0, 0.1)
+s1:set_material(red)
 
+s2 = gr.mesh('sphere','s2')
+root:add_child(s2)
+s2:scale(0.1, 2.0, 0.1)
+s2:rotate('z', -90.0)
+s2:translate(2.0, -2.0, 0.0)
+s2:set_material(blue)
 
--- Return the root with all of it's childern.  The SceneNode A3::m_rootNode will be set
--- equal to the return value from this Lua script.
-return rootNode
+s3 = gr.mesh('sphere','s3')
+root:add_child(s3)
+s3:scale(0.1, 0.1, 2.0)
+s3:translate(0.0, -2.0, 2.0)
+s3:set_material(green)
+
+root:translate(-2.75, 0.0, -10.0)
+
+return root

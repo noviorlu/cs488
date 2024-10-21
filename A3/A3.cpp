@@ -266,24 +266,24 @@ void A3::initViewMatrix() {
 
 //----------------------------------------------------------------------------------------
 void A3::initLightSources() {
-    // World-space position
-    // for (int x = -1; x <= 1; x += 2) {
-    //     for (int y = -1; y <= 1; y += 2) {
-    //         for (int z = -1; z <= 1; z += 2) {
-    //             LightSource light;
-    //             light.position = vec3(5.0f * x, 5.0f * y, 5.0f * z);
-    //             light.position = glm::vec3(m_rootNode->get_transform() * glm::vec4(light.position, 1.0f));
+    //World-space position
+    for (int x = -1; x <= 1; x += 2) {
+        for (int y = -1; y <= 1; y += 2) {
+            for (int z = -1; z <= 1; z += 2) {
+                LightSource light;
+                light.position = vec3(5.0f * x, 5.0f * y, 5.0f * z);
+                light.position = glm::vec3(m_rootNode->get_transform() * glm::vec4(light.position, 1.0f));
 
-    //             if (x < 0) {
-    //                 light.rgbIntensity = vec3(0.17, 0.64, 0.85) * 0.5f;
-    //             } else {
-    //                 light.rgbIntensity = vec3(0.81, 0.57, 0.05) * 0.5f;
-    //             }
+                if (x < 0) {
+                    light.rgbIntensity = vec3(0.17, 0.64, 0.85) * 0.5f;
+                } else {
+                    light.rgbIntensity = vec3(0.81, 0.57, 0.05) * 0.5f;
+                }
 
-    //             m_lights.push_back(light);
-    //         }
-    //     }
-    // }
+                m_lights.push_back(light);
+            }
+        }
+    }
 
 	// setup a simple point light
 	LightSource light;
@@ -338,8 +338,24 @@ void A3::uploadCommonSceneUniforms() {
 void A3::appLogic()
 {
 	// Place per frame, application logic here ...
-
 	uploadCommonSceneUniforms();
+
+	if(pickedID != 0){
+		SceneNode* selectedNode = m_rootNode->findJointNodes(pickedID, nullptr);
+		if(selectedNode != nullptr){
+			// find if selectedNode exists in m_jointNodes, if yes delete, if no push_back
+			auto jNode = static_cast<JointNode*>(selectedNode);
+
+			auto it = m_jointNodes.find(jNode);
+			if (it != m_jointNodes.end()) {
+				m_jointNodes.erase(it);
+			} else {
+				m_jointNodes.insert(jNode);
+			}
+		}
+
+		pickedID = 0;
+	}
 }
 
 //----------------------------------------------------------------------------------------
@@ -381,6 +397,13 @@ void A3::guiLogic()
 			ImGui::ColorEdit3(lightPosStr.c_str(), &m_lights[i].rgbIntensity.x);
 		}
 
+		if(m_controlMode == ControlMode::JOINTS){
+			ImGui::Text("Selected Joints: ");
+			for(auto joint : m_jointNodes){
+				ImGui::Text(joint->m_name.c_str());
+			}
+		}
+
 		if (ImGui::Button("Reset")) {
 			reset();
 		}
@@ -415,11 +438,14 @@ void A3::draw() {
 
 //----------------------------------------------------------------------------------------
 void A3::renderSceneGraph(const SceneNode & root) {
-	// Geometry pass	
+	// Geometry pass
 	m_gBuffer.bind();
-	glClearColor(0.0, 0.0, 0.0, 1.0);
+	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
+	// REALLY IMPORTANT!!!!! if blend on, the GBuffer texture automatically unify
+	glDisable(GL_BLEND);
+
 	if(m_enableZBuffer) 
 		glEnable(GL_DEPTH_TEST);
 	else 
@@ -447,9 +473,30 @@ void A3::renderSceneGraph(const SceneNode & root) {
 	glBindVertexArray(0);
 	CHECK_GL_ERRORS;
 
+	// for color picking propose
+	if(m_controlMode == ControlMode::JOINTS && selectedPick){
+		// get cursor position
+		double xpos, ypos;
+		glfwGetCursorPos(m_window, &xpos, &ypos);
+		int viewport[4];
+		glGetIntegerv(GL_VIEWPORT, viewport); 
+		int adjustedY = viewport[3] - (int)ypos - 1;
+
+		float pixelColor[4];
+		glReadBuffer(GL_COLOR_ATTACHMENT1);
+		glReadPixels((int)xpos, adjustedY, 1, 1, GL_RGBA, GL_FLOAT, pixelColor);
+
+		// print pixelColor
+		std::cout << "pixelColor: " << pixelColor[0] << " " << pixelColor[1] << " " << pixelColor[2] << " " << pixelColor[3] << std::endl;
+		pickedID = (int)pixelColor[3];
+
+
+		selectedPick = false;
+	}
+
 	m_gBuffer.unbind();
 	// Lighting pass
-
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	m_lightingPass.enable();
 
 	glDisable(GL_DEPTH_TEST);
@@ -458,8 +505,6 @@ void A3::renderSceneGraph(const SceneNode & root) {
 	m_gBuffer.draw(m_lightingPass);
 	CHECK_GL_ERRORS;
 	m_lightingPass.disable();
-
-	// m_gBuffer.drawDepth();
 }
 
 //----------------------------------------------------------------------------------------
@@ -544,8 +589,8 @@ bool A3::mouseMoveEvent (
 		}
 	}
 
-	if( m_controlMode == ControlMode::JOINTS && !m_mouseLeftPressed ) {
-
+	if( m_controlMode == ControlMode::JOINTS) {
+		
 	}
 
 	prevXPos = xPos;
@@ -575,16 +620,7 @@ bool A3::mouseButtonInputEvent (
 
 		if( button == GLFW_MOUSE_BUTTON_LEFT ) {
 			m_mouseLeftPressed = true;
-
-			if(m_controlMode == ControlMode::JOINTS) {
-				// get color from cursor position
-				glReadBuffer(GL_BACK);
-				unsigned char pixel[4];
-				glReadPixels(xpos, m_framebufferHeight - ypos, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixel);
-				int pickedID = pixel[0] / 255.0 * m_rootNode->totalSceneNodes();
-				std::cout << "Picked ID: " << pickedID << std::endl;
-			}
-
+			selectedPick = true;
 		}
 		else if( button == GLFW_MOUSE_BUTTON_RIGHT ) {
 			m_mouseRightPressed = true;

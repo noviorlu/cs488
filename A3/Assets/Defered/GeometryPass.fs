@@ -13,16 +13,9 @@ struct Material {
 };
 uniform Material material;
 uniform int nodeId;
-uniform int pickMode;
 
 void main() {
     gPosition = vec4(fs_in.FragPos, gl_FragCoord.z);
-    geoNormal = vec4(normalize(fs_in.Normal), 1.0);
-    if(pickMode != 0){
-        float clr = float(nodeId) / float(pickMode);
-        gAlbedoID = vec4(clr, clr, clr, 1.0);
-    }
-    else{
-        gAlbedoID = vec4(material.kd, 1.0);
-    }
+    geoNormal = vec4(normalize(fs_in.Normal), nodeId);
+    gAlbedoID = vec4(material.kd, 1.0);
 }

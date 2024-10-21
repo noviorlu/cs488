@@ -8,11 +8,13 @@
 #include "cs488-framework/MeshConsolidator.hpp"
 
 #include "SceneNode.hpp"
+#include "JointNode.hpp"
 #include "GBuffer.hpp"
 
 #include <glm/glm.hpp>
 #include <memory>
 #include <vector>
+#include <unordered_set>
 #include <cmath>
 
 struct LightSource {
@@ -113,5 +115,9 @@ protected:
 	bool m_insideCircle;
 	void reset();
 
-	SceneNode* selectedNode;
+
+	std::unordered_set<JointNode*> m_jointNodes;
+	SceneNode* selectedNode = nullptr;
+	int pickedID = 0;
+	bool selectedPick = false;
 };

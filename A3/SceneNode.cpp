@@ -104,12 +104,6 @@ void SceneNode::draw(
         const glm::mat4& modelMatrix, const glm::mat4& viewMatrix, 
         const ShaderProgram& shader, BatchInfoMap& modelBatch) const
 {
-	// Assert if m_name is not "root" and exit directly
-	if (m_name != "root") {
-		std::cerr << "Error: Attempt to draw a non-root node, can only have one unique node name root, .lua Format Incorrect!" << std::endl;
-		exit(-1);
-	}
-	
 	for (const SceneNode* child : children) {
 		child->draw(modelMatrix * trans, viewMatrix, shader, modelBatch);
 	}
@@ -129,6 +123,21 @@ void SceneNode::translate(const glm::vec3& amount) {
 int SceneNode::totalSceneNodes() const {
 	return nodeInstanceCount;
 }
+
+//---------------------------------------------------------------------------------------
+SceneNode* SceneNode::findJointNodes(const int& nodeId, SceneNode* closestJointNode) {
+	if(nodeId == m_nodeId) {
+		return closestJointNode;
+	}
+
+	for (SceneNode* child : children) {
+		auto jointNode = child->findJointNodes(nodeId, closestJointNode);
+		if(jointNode) return jointNode;
+	}
+
+	return nullptr;
+}
+
 
 //---------------------------------------------------------------------------------------
 std::ostream & operator << (std::ostream & os, const SceneNode & node) {

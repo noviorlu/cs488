@@ -12,10 +12,11 @@ public:
 	void set_joint_x(double min, double init, double max);
 	void set_joint_y(double min, double init, double max);
 
+    SceneNode* findJointNodes(const int& nodeId, SceneNode* closestJointNode) override;
+
 	struct JointRange {
 		double min, init, max;
 	};
-
 
 	JointRange m_joint_x, m_joint_y;
 };

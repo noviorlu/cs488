@@ -51,13 +51,15 @@ public:
         for(SceneNode* child : children){
             child->restoreInitialTrans();
         }
-     }
+    }
     void storeInitialTrans(){ 
         initialTrans = trans;
         for(SceneNode* child : children){
             child->storeInitialTrans();
         }
-     }
+    }
+
+    virtual SceneNode* findJointNodes(const int& nodeId, SceneNode* closestJointNode);
 
 	friend std::ostream & operator << (std::ostream & os, const SceneNode & node);
 
