@@ -16,6 +16,11 @@ public:
 
     void rotate(char axis, float angle) override;
 
+	void draw(
+		const glm::mat4& modelMatrix, const glm::mat4& viewMatrix, 
+        const ShaderProgram& shader, BatchInfoMap& modelBatch
+	) const;
+
 	struct JointRange {
 		double min, init, max;
 	};
@@ -25,6 +30,9 @@ public:
 		rotate('y', m_joint_y.init - current_y);
 		current_x = m_joint_x.init;
 		current_y = m_joint_y.init;
+		rot = glm::mat4(1.0f);
+		JointNode::rotate('x', current_x);
+		JointNode::rotate('y', current_y);
 		SceneNode::restoreInitialTrans();
     }
     void storeInitialTrans() override {
@@ -37,4 +45,6 @@ public:
 
 	JointRange m_joint_x, m_joint_y;
 	double current_x = 0, current_y = 0;
+
+	glm::mat4 rot;
 };
