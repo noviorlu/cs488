@@ -14,9 +14,27 @@ public:
 
     SceneNode* findJointNodes(const int& nodeId, SceneNode* closestJointNode) override;
 
+    void rotate(char axis, float angle) override;
+
 	struct JointRange {
 		double min, init, max;
 	};
 
+	void restoreInitialTrans() override { 
+        rotate('x', m_joint_x.init - current_x);
+		rotate('y', m_joint_y.init - current_y);
+		current_x = m_joint_x.init;
+		current_y = m_joint_y.init;
+		SceneNode::restoreInitialTrans();
+    }
+    void storeInitialTrans() override {
+		current_x = m_joint_x.init;
+		current_y = m_joint_y.init;
+		rotate('x', current_x);
+		rotate('y', current_y);
+        SceneNode::storeInitialTrans();
+    }
+
 	JointRange m_joint_x, m_joint_y;
+	double current_x = 0, current_y = 0;
 };

@@ -43,16 +43,16 @@ public:
         const ShaderProgram& shader, BatchInfoMap& modelBatch) const;
 
 	//-- Transformations:
-    void rotate(char axis, float angle);
+    virtual void rotate(char axis, float angle);
     void scale(const glm::vec3& amount);
     void translate(const glm::vec3& amount);
-    void restoreInitialTrans(){ 
+    virtual void restoreInitialTrans(){ 
         trans = initialTrans;
         for(SceneNode* child : children){
             child->restoreInitialTrans();
         }
     }
-    void storeInitialTrans(){ 
+    virtual void storeInitialTrans(){ 
         initialTrans = trans;
         for(SceneNode* child : children){
             child->storeInitialTrans();

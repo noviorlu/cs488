@@ -266,24 +266,24 @@ void A3::initViewMatrix() {
 
 //----------------------------------------------------------------------------------------
 void A3::initLightSources() {
-    //World-space position
-    for (int x = -1; x <= 1; x += 2) {
-        for (int y = -1; y <= 1; y += 2) {
-            for (int z = -1; z <= 1; z += 2) {
-                LightSource light;
-                light.position = vec3(5.0f * x, 5.0f * y, 5.0f * z);
-                light.position = glm::vec3(m_rootNode->get_transform() * glm::vec4(light.position, 1.0f));
+    // //World-space position
+    // for (int x = -1; x <= 1; x += 2) {
+    //     for (int y = -1; y <= 1; y += 2) {
+    //         for (int z = -1; z <= 1; z += 2) {
+    //             LightSource light;
+    //             light.position = vec3(5.0f * x, 5.0f * y, 5.0f * z);
+    //             light.position = glm::vec3(m_rootNode->get_transform() * glm::vec4(light.position, 1.0f));
 
-                if (x < 0) {
-                    light.rgbIntensity = vec3(0.17, 0.64, 0.85) * 0.5f;
-                } else {
-                    light.rgbIntensity = vec3(0.81, 0.57, 0.05) * 0.5f;
-                }
+    //             if (x < 0) {
+    //                 light.rgbIntensity = vec3(0.17, 0.64, 0.85) * 0.5f;
+    //             } else {
+    //                 light.rgbIntensity = vec3(0.81, 0.57, 0.05) * 0.5f;
+    //             }
 
-                m_lights.push_back(light);
-            }
-        }
-    }
+    //             m_lights.push_back(light);
+    //         }
+    //     }
+    // }
 
 	// setup a simple point light
 	LightSource light;
@@ -590,8 +590,19 @@ bool A3::mouseMoveEvent (
 	}
 
 	if( m_controlMode == ControlMode::JOINTS) {
-		
+		if (m_mouseMiddlePressed) {
+			for (auto joint : m_jointNodes) {
+				float deltaAngle = -deltaY * 0.5f;
+				joint->rotate('x', deltaAngle);
+			}
+		} else if (m_mouseRightPressed) {
+			for (auto joint : m_jointNodes) {
+				float deltaAngle = deltaX * 0.5f;
+				joint->rotate('y', deltaAngle);
+			}
+		}
 	}
+
 
 	prevXPos = xPos;
 	prevYPos = yPos;
