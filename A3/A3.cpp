@@ -300,14 +300,12 @@ void A3::uploadCommonSceneUniforms() {
 	{
 		//-- Set Perpsective matrix uniform for the scene:
 		m_geometryPass.SetUniformMat4f("Perspective", m_perpsective);
-		m_geometryPass.SetUniform1i("pickMode", pick);
 		CHECK_GL_ERRORS;
 	}
 	m_geometryPass.disable();
 
 	m_lightingPass.enable();
 	{
-		m_lightingPass.SetUniform1i("pickMode", pick);
 		m_lightingPass.SetUniformMat4f("View", m_view);
 		
 		m_lightingPass.SetUniform1i("gPosition", 0);
@@ -736,6 +734,13 @@ void A3::resetControls(){
 	m_mouseLeftPressed = false;
 	m_mouseMiddlePressed = false;
 	m_mouseRightPressed = false;
+
+	for(auto joint : m_jointNodes){
+		for(auto child : joint->children){
+			child->selected = false;
+		}
+	}
+	m_jointNodes.clear();
 }
 
 void A3::reset(){

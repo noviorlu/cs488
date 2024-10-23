@@ -3,8 +3,14 @@
 #include "JointNode.hpp"
 #include "cs488-framework/MathUtils.hpp"
 
+#include <iostream>
+#include <sstream>
+using namespace std;
+
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
+
+using namespace glm;
 
 //---------------------------------------------------------------------------------------
 JointNode::JointNode(const std::string& name)
@@ -39,8 +45,6 @@ SceneNode* JointNode::findJointNodes(const int& nodeId, SceneNode* closestJointN
 //---------------------------------------------------------------------------------------
 void JointNode::rotate(char axis, float angle) {
 	if(axis == 'z') return;
-	glm::vec3 rot_axis;
-
 	if(axis == 'x'){
 		// clamp by min and max
 		if(current_x + angle > m_joint_x.max){
@@ -61,5 +65,17 @@ void JointNode::rotate(char axis, float angle) {
 		}
 		current_y += angle;
 	}
-	SceneNode::rotate(axis, angle);
+
+	mat4 rotx_matrix = glm::rotate(degreesToRadians(current_x), vec3(1, 0, 0));
+	mat4 roty_matrix = glm::rotate(degreesToRadians(current_y), vec3(0, 1, 0));
+	rot = rotx_matrix * roty_matrix;
+}
+
+void JointNode::draw(
+	const glm::mat4& modelMatrix, const glm::mat4& viewMatrix, 
+	const ShaderProgram& shader, BatchInfoMap& modelBatch) const
+{
+	for (const SceneNode* child : children) {
+		child->draw(modelMatrix * trans * rot, viewMatrix, shader, modelBatch);
+	}
 }

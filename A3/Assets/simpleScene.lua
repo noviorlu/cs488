@@ -4,10 +4,10 @@
 root = gr.node('root')
 
 -- Materials
-red = gr.material({1.0, 0.0, 0.0}, {0.1, 0.1, 0.1}, 10)
-blue = gr.material({0.0, 0.0, 1.0}, {0.1, 0.1, 0.1}, 10)
-green = gr.material({0.0, 1.0, 0.0}, {0.1, 0.1, 0.1}, 10)
-white = gr.material({1.0, 1.0, 1.0}, {0.1, 0.1, 0.1}, 10)
+red = gr.material({1.0, 0.0, 0.0}, {0.5, 0.4, 0.4}, 25)
+blue = gr.material({1.0, 0.84, 0.0}, {0.4, 0.4, 0.5}, 25)
+green = gr.material({0.5, 0.0, 0.5}, {0.4, 0.5, 0.4}, 25)
+white = gr.material({0.95, 0.95, 0.95}, {0.5, 0.5, 0.5}, 25)
 
 -- Torso
 torso_joint = gr.joint('torso_joint', {-90, 0, 90}, {-90, 0, 90})
@@ -20,7 +20,7 @@ torso_joint:add_child(torso)
 
 -- Shoulders
 shoulder_joint = gr.joint('shoulder_joint', {-45, 0, 45}, {-45, 0, 45})
-shoulder_joint:translate(0.0, 1.0, 0.0)
+shoulder_joint:translate(0.0, 1.2, 0.0)
 torso_joint:add_child(shoulder_joint)
 
 shoulders = gr.mesh('cube', 'shoulders')
@@ -172,7 +172,6 @@ right_foot_joint:add_child(right_foot)
 
 -- Neck
 neck_joint = gr.joint('neck_joint', {-30, 0, 30}, {-30, 0, 30})
-neck_joint:translate(0.0, 1.5, 0.0)
 shoulder_joint:add_child(neck_joint)
 
 neck = gr.mesh('cube', 'neck')

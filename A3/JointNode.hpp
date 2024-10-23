@@ -16,6 +16,11 @@ public:
 
     void rotate(char axis, float angle) override;
 
+	void draw(
+		const glm::mat4& modelMatrix, const glm::mat4& viewMatrix, 
+		const ShaderProgram& shader, BatchInfoMap& modelBatch) const override;
+
+
 	struct JointRange {
 		double min, init, max;
 	};
@@ -38,5 +43,7 @@ public:
     }
 
 	JointRange m_joint_x, m_joint_y;
-	double current_x = 0, current_y = 0;
+	float current_x = 0, current_y = 0;
+
+	glm::mat4 rot;
 };

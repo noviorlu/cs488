@@ -23,5 +23,5 @@ public:
 	// Mesh Identifier. This must correspond to an object name of
 	// a loaded .obj file.
 	std::string meshId;
-	glm::vec3 selectedColor = glm::vec3(1.0, 1.0, 0.0);
+	glm::vec3 selectedColor = glm::vec3(0.0, 0.0, 0.5);
 };
