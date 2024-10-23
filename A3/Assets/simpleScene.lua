@@ -20,7 +20,7 @@ torso_joint:add_child(torso)
 
 -- Shoulders
 shoulder_joint = gr.joint('shoulder_joint', {-45, 0, 45}, {-45, 0, 45})
-shoulder_joint:translate(0.0, 1.2, 0.0)
+shoulder_joint:translate(0.0, 1.0, 0.0)
 torso_joint:add_child(shoulder_joint)
 
 shoulders = gr.mesh('cube', 'shoulders')
@@ -96,7 +96,7 @@ right_hand_joint:add_child(right_hand)
 
 -- Hips
 hips_joint = gr.joint('hips_joint', {-45, 0, 45}, {-45, 0, 45})
-hips_joint:translate(0.0, -1.0, 0.0)
+hips_joint:translate(0.0, -1.5, 0.0)
 torso_joint:add_child(hips_joint)
 
 hips = gr.mesh('cube', 'hips')
@@ -106,7 +106,7 @@ hips_joint:add_child(hips)
 
 -- Left Thigh
 left_thigh_joint = gr.joint('left_thigh_joint', {-90, 0, 90}, {-90, 0, 90})
-left_thigh_joint:translate(-0.75, -0.5, 0.0)
+left_thigh_joint:translate(-0.75, 0.0, 0.0)
 hips_joint:add_child(left_thigh_joint)
 
 left_thigh = gr.mesh('cube', 'left_thigh')
@@ -139,7 +139,7 @@ left_foot_joint:add_child(left_foot)
 
 -- Right Thigh
 right_thigh_joint = gr.joint('right_thigh_joint', {-90, 0, 90}, {-90, 0, 90})
-right_thigh_joint:translate(0.75, -0.5, 0.0)
+right_thigh_joint:translate(0.75, 0.0, 0.0)
 hips_joint:add_child(right_thigh_joint)
 
 right_thigh = gr.mesh('cube', 'right_thigh')
