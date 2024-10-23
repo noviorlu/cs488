@@ -13,7 +13,6 @@ struct Light {
 };
 
 uniform int numLights;
-uniform int pickMode;
 uniform Light lights[10];
 
 void main() {
@@ -24,12 +23,6 @@ void main() {
     // depth testing
     if(FragPos.a == 1.0){
         FragColor = vec4(0.0);
-        return;
-    }
-
-    // nodeID when picking mode
-    if(pickMode != 0){
-        FragColor = Albedo;
         return;
     }
 

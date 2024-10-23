@@ -127,6 +127,7 @@ int SceneNode::totalSceneNodes() const {
 //---------------------------------------------------------------------------------------
 SceneNode* SceneNode::findJointNodes(const int& nodeId, SceneNode* closestJointNode) {
 	if(nodeId == m_nodeId) {
+		selected = !selected;
 		return closestJointNode;
 	}
 

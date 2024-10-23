@@ -350,6 +350,7 @@ void A3::appLogic()
 			if (it != m_jointNodes.end()) {
 				m_jointNodes.erase(it);
 			} else {
+				
 				m_jointNodes.insert(jNode);
 			}
 		}

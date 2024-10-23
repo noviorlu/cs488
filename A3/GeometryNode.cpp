@@ -38,8 +38,12 @@ void GeometryNode::draw(
 	shader.SetUniformMat3f("NormalMatrix", normalMatrix);
 
 	//-- Set Material values:
-	vec3 kd = material.kd;
-	shader.SetUniform3fv("material.kd", kd);
+	if(selected) {
+		shader.SetUniform3fv("material.kd", selectedColor);
+	}
+	else{
+		shader.SetUniform3fv("material.kd", material.kd);
+	}
  
 	//-- Set SceneNode ID:
 	shader.SetUniform1i("nodeId", m_nodeId);
@@ -49,8 +53,4 @@ void GeometryNode::draw(
 	//-- Now render the mesh:
 	glDrawArrays(GL_TRIANGLES, batchInfo.startIndex, batchInfo.numIndices);
 	shader.disable();
-	
-	for (const SceneNode* child : children) {
-		child->draw(modelMatrix * trans, viewMatrix, shader, modelBatch);
-	}
 }
