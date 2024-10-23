@@ -95,7 +95,7 @@ void SceneNode::rotate(char axis, float angle) {
 			break;
 	}
 	mat4 rot_matrix = glm::rotate(degreesToRadians(angle), rot_axis);
-	trans = rot_matrix * trans;
+	trans = trans * rot_matrix;
 }
 
 //---------------------------------------------------------------------------------------
