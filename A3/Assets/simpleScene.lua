@@ -5,9 +5,9 @@ root = gr.node('root')
 
 -- Materials
 red = gr.material({1.0, 0.0, 0.0}, {0.5, 0.4, 0.4}, 25)
-blue = gr.material({1.0, 0.84, 0.0}, {0.4, 0.4, 0.5}, 25)
+blue = gr.material({0.5, 0.42, 0.0}, {0.4, 0.4, 0.5}, 25)
 green = gr.material({0.5, 0.0, 0.5}, {0.4, 0.5, 0.4}, 25)
-white = gr.material({0.95, 0.95, 0.95}, {0.5, 0.5, 0.5}, 25)
+white = gr.material({0.5, 0.5, 0.5}, {0.5, 0.5, 0.5}, 25)
 
 -- Torso
 torso_joint = gr.joint('torso_joint', {-90, 0, 90}, {-90, 0, 90})

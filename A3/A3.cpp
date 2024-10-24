@@ -266,30 +266,87 @@ void A3::initViewMatrix() {
 
 //----------------------------------------------------------------------------------------
 void A3::initLightSources() {
-    // //World-space position
-    // for (int x = -1; x <= 1; x += 2) {
-    //     for (int y = -1; y <= 1; y += 2) {
-    //         for (int z = -1; z <= 1; z += 2) {
-    //             LightSource light;
-    //             light.position = vec3(5.0f * x, 5.0f * y, 5.0f * z);
-    //             light.position = glm::vec3(m_rootNode->get_transform() * glm::vec4(light.position, 1.0f));
+	m_lights.clear();
+    //World-space position
+    for (int x = -1; x <= 1; x += 2) {
+        for (int y = -1; y <= 1; y += 2) {
+            for (int z = -1; z <= 1; z += 2) {
+                LightSource light;
+                light.position = vec3(5.0f * x, 5.0f * y, 5.0f * z);
+                light.position = glm::vec3(m_rootNode->get_transform() * glm::vec4(light.position, 1.0f));
 
-    //             if (x < 0) {
-    //                 light.rgbIntensity = vec3(0.17, 0.64, 0.85) * 0.5f;
-    //             } else {
-    //                 light.rgbIntensity = vec3(0.81, 0.57, 0.05) * 0.5f;
-    //             }
+                if (x < 0) {
+                    light.rgbIntensity = vec3(0.17, 0.64, 0.85);
+                } else {
+                    light.rgbIntensity = vec3(0.81, 0.57, 0.05);
+                }
 
-    //             m_lights.push_back(light);
-    //         }
-    //     }
-    // }
+                m_lights.push_back(light);
+            }
+        }
+    }
+}
 
+void A3::OneLightSource(){
 	// setup a simple point light
+	m_lights.clear();
 	LightSource light;
 	light.position = vec3(3.0f, 3.0f, 3.0f);
-	light.rgbIntensity = vec3(0.8f); // light
+	light.rgbIntensity = vec3(0.2f); // light
 	m_lights.push_back(light);
+}
+
+void A3::addRandomLightSource(){
+	// Randomly generate a light source inside -10 to 10 cube and with random color
+	if(m_lights.size() >= 256){
+		std::cout << "Cannot add more than 256 light sources" << std::endl;
+		return;
+	}
+	
+	LightSource light;
+	light.position = vec3(rand() % 20 - 10, rand() % 20 - 10, rand() % 20 - 10);
+	light.rgbIntensity = vec3((rand() % 100) / 100.0f, (rand() % 100) / 100.0f, (rand() % 100) / 100.0f) * 0.5f;
+
+
+	m_lights.push_back(light);
+}
+
+void A3::addTenRandomLightSource(){
+	for(int i = 0; i < 10; i++){
+		addRandomLightSource();
+	}
+}
+
+void A3::removeLightSource(int i){
+	if(i >= m_lights.size() || i < 0){
+		std::cout << "Cannot remove light source at index " << i << std::endl;
+		return;
+	}
+	// Remove the ith light source
+	m_lights.erase(m_lights.begin() + i);
+}
+
+void A3::removeTenLightSource(){
+	for(int i = 0; i < 10; i++){
+		if(m_lights.size() == 0){
+			std::cout << "No more light sources to remove" << std::endl;
+			return;
+		}
+		m_lights.pop_back();
+	}
+}
+
+void A3::dynamicLightSource(){
+	// Move the light source in a circle
+	for(int i = 0; i < m_lights.size(); i++){
+		// dynamically move the light source in a circular path with different angles
+		float time = glfwGetTime();
+		float radius = 5.0f;
+		float speed = 0.5f;
+		float angleOffset = i * (M_PI / 4); // different angle for each light source
+		m_lights[i].position.x = radius * cos(speed * time + angleOffset);
+		m_lights[i].position.z = radius * sin(speed * time + angleOffset);
+	}
 }
 
 //----------------------------------------------------------------------------------------
@@ -323,7 +380,7 @@ void A3::uploadCommonSceneUniforms() {
 		for (int i = 0; i < m_lights.size(); ++i) {
 			std::string lightColorStr = "lights[" + std::to_string(i) + "].Color";
 			auto &light = m_lights[i];
-			m_lightingPass.SetUniform3fv(lightColorStr.c_str(), light.rgbIntensity);
+			m_lightingPass.SetUniform3fv(lightColorStr.c_str(), light.rgbIntensity * 8.0f / (float)m_lights.size());
 		}
 	}
 	m_lightingPass.disable();
@@ -354,6 +411,10 @@ void A3::appLogic()
 		}
 
 		pickedID = 0;
+	}
+
+	if(isDynamicLightSource){
+		dynamicLightSource();	
 	}
 }
 
@@ -389,13 +450,6 @@ void A3::guiLogic()
 		ImGui::RadioButton("Orientation", (int*)&m_controlMode, ControlMode::ORIENTATION);
 		ImGui::RadioButton("Joints", (int*)&m_controlMode, ControlMode::JOINTS);
 
-		// Modify lightsource positions & color
-		for (int i = 0; i < m_lights.size(); ++i) {
-			std::string lightPosStr = "Light " + std::to_string(i);
-			ImGui::SliderFloat3(lightPosStr.c_str(), &m_lights[i].position.x, -10.0f, 10.0f);
-			ImGui::ColorEdit3(lightPosStr.c_str(), &m_lights[i].rgbIntensity.x);
-		}
-
 		if(m_controlMode == ControlMode::JOINTS){
 			ImGui::Text("Selected Joints: ");
 			for(auto joint : m_jointNodes){
@@ -419,6 +473,42 @@ void A3::guiLogic()
 		}
 
 		ImGui::Text( "Framerate: %.1f FPS", ImGui::GetIO().Framerate );
+
+	ImGui::End();
+
+	ImGui::Begin("Light Source", &showDebugWindow, ImVec2(100,100), opacity,
+			windowFlags);
+
+		if (ImGui::Button("One Light Source")) {
+			OneLightSource();
+		}
+
+		if (ImGui::Button("Multi Light Source")) {
+			initLightSources();
+		}
+
+
+		if (ImGui::Button("Add Light Source")) {
+			addRandomLightSource();
+		}
+
+		if (ImGui::Button("Add 10 Light Sources")) {
+			addTenRandomLightSource();
+		}
+
+		if (ImGui::Button("Remove 10 Light Sources")) {
+			removeTenLightSource();
+		}
+		ImGui::Checkbox("Dynamic Light Source", &isDynamicLightSource);
+		
+		for (int i = 0; i < m_lights.size(); ++i) {
+			std::string lightPosStr = "Light " + std::to_string(i);
+			ImGui::SliderFloat3(lightPosStr.c_str(), &m_lights[i].position.x, -10.0f, 10.0f);
+			ImGui::ColorEdit3(lightPosStr.c_str(), &m_lights[i].rgbIntensity.x);
+			if (ImGui::Button("Remove Light Source")) {
+				removeLightSource(i);
+			}
+		}
 
 	ImGui::End();
 }
@@ -560,6 +650,9 @@ bool A3::mouseMoveEvent (
 		double yPos
 ) {
 	bool eventHandled(false);
+
+	// if mouse on imgui do nothing
+	if(ImGui::GetIO().WantCaptureMouse) return eventHandled;
 
 	// Fill in with event handling code...
 	double deltaX = xPos - prevXPos;

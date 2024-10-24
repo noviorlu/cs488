@@ -4,12 +4,12 @@ layout (location = 0) in vec2 inPosition;
 layout (location = 1) in vec2 inTexCoords;
 
 out vec2 TexCoords;
-out vec3 TransformedLightPositions[10];
+out vec3 TransformedLightPositions[20];
 
 uniform mat4 View;
 
 uniform int numLights;
-uniform vec3 lightPositions[10];
+uniform vec3 lightPositions[20];
 
 void main() {
     TexCoords = inTexCoords;

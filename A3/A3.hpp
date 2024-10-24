@@ -51,6 +51,13 @@ protected:
 	void mapVboDataToVertexShaderInputLocations();
 	void initViewMatrix();
 	void initLightSources();
+	void OneLightSource();
+	void addRandomLightSource();
+	void addTenRandomLightSource();
+	void removeLightSource(int i);
+	void removeTenLightSource();
+	void dynamicLightSource();
+	bool isDynamicLightSource = false;
 
 	void initPerspectiveMatrix();
 	void uploadCommonSceneUniforms();

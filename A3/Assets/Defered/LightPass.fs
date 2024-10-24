@@ -2,7 +2,7 @@
 
 out vec4 FragColor;
 in vec2 TexCoords;
-in vec3 TransformedLightPositions[10];
+in vec3 TransformedLightPositions[20];
 
 uniform sampler2D gPosition;
 uniform sampler2D geoNormal;
@@ -13,7 +13,7 @@ struct Light {
 };
 
 uniform int numLights;
-uniform Light lights[10];
+uniform Light lights[256];
 
 void main() {
     vec4 FragPos = texture(gPosition, TexCoords).rgba;
