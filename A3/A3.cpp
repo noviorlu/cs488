@@ -357,31 +357,45 @@ void A3::uploadCommonSceneUniforms() {
 	m_geometryPass.enable();
 	{
 		//-- Set Perpsective matrix uniform for the scene:
-		m_geometryPass.SetUniformMat4f("Perspective", m_perpsective);
+		auto id = m_geometryPass.getUniformLocation("Perspective");
+		glUniformMatrix4fv(id, 1, GL_FALSE, &m_perpsective[0][0]);
 		CHECK_GL_ERRORS;
 	}
 	m_geometryPass.disable();
 
 	m_lightingPass.enable();
 	{
-		m_lightingPass.SetUniformMat4f("View", m_view);
-		
-		m_lightingPass.SetUniform1i("gPosition", 0);
-		m_lightingPass.SetUniform1i("geoNormal", 1);
-		m_lightingPass.SetUniform1i("gAlbedoID", 2);
+		auto id = m_lightingPass.getUniformLocation("View");
+		glUniformMatrix4fv(id, 1, GL_FALSE, &m_view[0][0]);
+
+		auto id2 = m_lightingPass.getUniformLocation("gPosition");
+		glUniform1i(id2, 0);
+
+		auto id3 = m_lightingPass.getUniformLocation("gNormal");
+		glUniform1i(id3, 1);
+
+		auto id4 = m_lightingPass.getUniformLocation("gAlbedoID");
+		glUniform1i(id4, 2);
+
 		CHECK_GL_ERRORS;
-		m_lightingPass.SetUniform1i("numLights", m_lights.size());
+		auto id5 = m_lightingPass.getUniformLocation("numLights");
+		glUniform1i(id5, m_lights.size());
+
 
 		for (int i = 0; i < m_lights.size(); ++i) {
 			std::string lightPosStr = "lightPositions[" + std::to_string(i) + "]";
 			auto &light = m_lights[i];
-			m_lightingPass.SetUniform3fv(lightPosStr.c_str(), light.position);
+
+			auto id6 = m_lightingPass.getUniformLocation(lightPosStr.c_str());
+			glUniform3fv(id6, 1, &light.position[0]);
 		}
 
 		for (int i = 0; i < m_lights.size(); ++i) {
 			std::string lightColorStr = "lights[" + std::to_string(i) + "].Color";
 			auto &light = m_lights[i];
-			m_lightingPass.SetUniform3fv(lightColorStr.c_str(), light.rgbIntensity * 8.0f / (float)m_lights.size());
+
+			auto id7 = m_lightingPass.getUniformLocation(lightColorStr.c_str());
+			glUniform3fv(id7, 1, &light.rgbIntensity[0]);
 		}
 	}
 	m_lightingPass.disable();

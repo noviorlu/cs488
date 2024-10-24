@@ -68,10 +68,6 @@ protected:
 	glm::mat4 m_view;
 
 	std::vector<LightSource> m_lights;
-	GLint loc_numLights = -1;
-	GLint loc_gPosition = -1;
-	GLint loc_gNormal = -1;
-	GLint loc_gAlbedoID = -1;
 
 
 	//-- GL resources for mesh geometry data:

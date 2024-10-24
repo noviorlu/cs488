@@ -5,7 +5,7 @@ in vec2 TexCoords;
 in vec3 TransformedLightPositions[20];
 
 uniform sampler2D gPosition;
-uniform sampler2D geoNormal;
+uniform sampler2D gNormal;
 uniform sampler2D gAlbedoID;
 
 struct Light {
@@ -17,7 +17,7 @@ uniform Light lights[256];
 
 void main() {
     vec4 FragPos = texture(gPosition, TexCoords).rgba;
-    vec4 Normal = texture(geoNormal, TexCoords).rgba;
+    vec4 Normal = texture(gNormal, TexCoords).rgba;
     vec4 Albedo = texture(gAlbedoID, TexCoords).rgba;
 
     // depth testing
