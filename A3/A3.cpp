@@ -826,6 +826,42 @@ bool A3::keyInputEvent (
 		}
 	}
 	// Fill in with event handling code...
+	if (action == GLFW_PRESS) {
+		switch (key) {
+			case GLFW_KEY_A:
+				reset();
+				eventHandled = true;
+				break;
+			case GLFW_KEY_Q:
+				glfwSetWindowShouldClose(m_window, GL_TRUE);
+				eventHandled = true;
+				break;
+			case GLFW_KEY_C:
+				m_enableCircle = !m_enableCircle;
+				eventHandled = true;
+				break;
+			case GLFW_KEY_Z:
+				m_enableZBuffer = !m_enableZBuffer;
+				eventHandled = true;
+				break;
+			case GLFW_KEY_B:
+				m_enableBackFaceCull = !m_enableBackFaceCull;
+				eventHandled = true;
+				break;
+			case GLFW_KEY_F:
+				m_enableFrontFaceCull = !m_enableFrontFaceCull;
+				eventHandled = true;
+				break;
+			case GLFW_KEY_P:
+				m_controlMode = ControlMode::ORIENTATION;
+				eventHandled = true;
+				break;
+			case GLFW_KEY_J:
+				m_controlMode = ControlMode::JOINTS;
+				eventHandled = true;
+				break;
+		}
+	}
 
 	return eventHandled;
 }
