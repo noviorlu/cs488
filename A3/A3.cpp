@@ -339,13 +339,14 @@ void A3::removeTenLightSource(){
 void A3::dynamicLightSource(){
 	// Move the light source in a circle
 	for(int i = 0; i < m_lights.size(); i++){
-		// dynamically move the light source in a circular path with different angles
+		// dynamically move the light source in a spherical path with different angles
 		float time = glfwGetTime();
-		float radius = 5.0f;
-		float speed = 0.5f;
+		float radius = 10.0f;
+		float speed = 1.0f;
 		float angleOffset = i * (M_PI / 4); // different angle for each light source
-		m_lights[i].position.x = radius * cos(speed * time + angleOffset);
-		m_lights[i].position.z = radius * sin(speed * time + angleOffset);
+		m_lights[i].position.x = radius * cos(speed * time + angleOffset) * sin(speed * time);
+		m_lights[i].position.z = radius * sin(speed * time + angleOffset) * sin(speed * time);
+		m_lights[i].position.y = radius * cos(speed * time); // spherical coordinate for y
 	}
 }
 
