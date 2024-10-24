@@ -1,6 +1,10 @@
 
 # README for CS 488/688 Assignment 3: Puppet
 
+<div align="center">
+  <img src="https://github.com/noviorlu/cs488/raw/master/A3/ScreenShot.png" alt="Screenshot of the Puppet Application" width="600">
+</div>
+
 ## Overview
 This project implements a hierarchical, articulated 3D humanoid model, or "puppet," for CS 488/688 (Introduction to Computer Graphics) at the University of Waterloo. The puppet consists of various body parts connected by joints, allowing interactive control of the puppet's movements. The puppet is constructed using simple geometric primitives and transformed instances, arranged in a hierarchical data structure.
 
