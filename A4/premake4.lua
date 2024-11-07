@@ -4,11 +4,13 @@ includeDirList = {
     "../shared",
     "../shared/include",
     "../shared/gl3w",
-    "../shared/imgui"
+    "../shared/imgui",
+    "../shared/glfw-3.3.8/include",
 }
 
 libDirectories = { 
-    "../lib"
+    "../lib",
+    "../shared/glfw-3.3.8/build/src",
 }
 
 
@@ -31,6 +33,24 @@ if os.get() == "linux" then
         "dl",
         "pthread"
     }
+end
+
+if os.get() == "windows" then
+    linkLibs = {
+        "cs488-framework",
+        "imgui",
+        "glfw3",
+        "opengl32",
+        "gdi32",
+        "user32",
+        "kernel32",
+        "shell32",
+        "Imm32",
+        "lua",
+        "lodepng"
+    }
+    table.insert(includeDirList, "C:/projects/vcpkg/installed/x64-windows/include")
+    table.insert(libDirectories, "C:/projects/vcpkg/installed/x64-windows/lib")
 end
 
 if os.get() == "macosx" then
