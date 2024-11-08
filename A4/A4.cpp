@@ -1,18 +1,63 @@
 // Termm--Fall 2024
 
 #include <glm/ext.hpp>
-
+#include "PhongMaterial.hpp"
 #include "A4.hpp"
 
 glm::vec3 TraceRay(
 	SceneNode* root, 
 	const Ray& ray, 
 	int depth, 
-	const glm::vec3 & ambient,
-	const std::list<Light *> & lights
+	const glm::vec3 &ambient,
+	const std::list<Light *> &lights
 ){
-	return glm::vec3(0.0f);
+	Intersection intersection;
+	intersection.t = std::numeric_limits<float>::infinity();
+	intersection.material = nullptr;
+
+	if (!root->intersect(ray, intersection)) {
+		// Return background color if no intersection
+		return glm::vec3(0.0f);
+	}
+
+	// static cast material to PhongMaterial
+	PhongMaterial *phongMaterial = static_cast<PhongMaterial *>(intersection.material);
+
+	// Initial color, start with ambient component
+	glm::vec3 color = ambient;
+
+	// Iterate over each light source
+	for (const auto& light : lights) {
+		glm::vec3 lightDir = glm::normalize(light->position - intersection.position);
+		float lightDistance = glm::length(light->position - intersection.position) - 1e-4f;
+
+		// Create shadow ray
+		Ray shadowRay;
+		shadowRay.origin = intersection.position + 1e-4f * lightDir; // Offset to avoid self-intersection
+		shadowRay.direction = lightDir;
+		shadowRay.mint = 0.0f;
+		shadowRay.maxt = lightDistance;
+
+		// Check if the shadow ray intersects any object
+		Intersection shadowIsect;
+		bool inShadow = root->intersect(shadowRay, shadowIsect);
+
+		if (!inShadow) {
+			// Calculate diffuse component
+			float diff = std::max(glm::dot(intersection.normal, lightDir), 0.0f);
+			color += phongMaterial->m_kd * diff * light->colour;
+
+			// Calculate specular component
+			glm::vec3 viewDir = glm::normalize(ray.origin - intersection.position);
+			glm::vec3 reflectDir = glm::reflect(-lightDir, intersection.normal);
+			float spec = pow(std::max(glm::dot(viewDir, reflectDir), 0.0f), phongMaterial->m_shininess);
+			color += phongMaterial->m_ks * spec * light->colour;
+		}
+	}
+
+	return color;
 }
+
 
 void A4_Render(
 	// What to render

@@ -14,8 +14,11 @@ public:
 	void setMaterial( Material *material );
 
 	bool intersect(const Ray& ray, Intersection& isect) override{
-		return m_primitive->intersect(ray, isect);
-		// GeometryNode should always be a leaf node
+		if(m_primitive->intersect(ray, isect)){
+			isect.material = m_material;
+			return true;
+		}
+		return false;
 	}
 
 	Material *m_material;
