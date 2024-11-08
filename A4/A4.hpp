@@ -2,11 +2,19 @@
 
 #pragma once
 
-#include <glm/glm.hpp>
+#include "common.hpp"
 
 #include "SceneNode.hpp"
 #include "Light.hpp"
 #include "Image.hpp"
+
+glm::vec3 TraceRay(
+	SceneNode* root, 
+	const Ray& ray, 
+	int depth, 
+	const glm::vec3 & ambient,
+	const std::list<Light *> & lights
+);
 
 void A4_Render(
 		// What to render

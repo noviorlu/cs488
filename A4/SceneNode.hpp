@@ -4,6 +4,7 @@
 
 #include "Material.hpp"
 
+#include "common.hpp"
 #include <glm/glm.hpp>
 
 #include <list>
@@ -40,6 +41,13 @@ public:
     void scale(const glm::vec3& amount);
     void translate(const glm::vec3& amount);
 
+    virtual bool intersect(const Ray& ray, Intersection& isect){
+        bool hit = false;
+        for (SceneNode* child : children) {
+            hit |= child->intersect(ray, isect);
+        }
+        return hit;
+    }
 
 	friend std::ostream & operator << (std::ostream & os, const SceneNode & node);
 

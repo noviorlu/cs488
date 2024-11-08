@@ -2,11 +2,13 @@
 
 #pragma once
 
+#include "common.hpp"
 #include <glm/glm.hpp>
 
 class Primitive {
 public:
   virtual ~Primitive();
+  virtual bool intersect(const Ray& ray, Intersection& isect){return false;}
 };
 
 class Sphere : public Primitive {
@@ -27,6 +29,8 @@ public:
   }
   virtual ~NonhierSphere();
 
+  bool intersect(const Ray& ray, Intersection& isect) override;
+
 private:
   glm::vec3 m_pos;
   double m_radius;
@@ -40,6 +44,8 @@ public:
   }
   
   virtual ~NonhierBox();
+
+  bool intersect(const Ray& ray, Intersection& isect) override;
 
 private:
   glm::vec3 m_pos;
