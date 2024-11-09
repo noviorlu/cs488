@@ -136,3 +136,34 @@ std::ostream & operator << (std::ostream & os, const SceneNode & node) {
 	os << "]\n";
 	return os;
 }
+void printMatrix(const glm::mat4& matrix) {
+    for (int row = 0; row < 4; ++row) {
+        for (int col = 0; col < 4; ++col) {
+            std::cout << matrix[row][col] << " ";
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
+}
+
+void SceneNode::transformRay(Ray& ray) {
+	ray.origin = glm::vec3(invtrans * glm::vec4(ray.origin, 1.0f));
+	ray.direction = glm::normalize(glm::vec3(invtrans * glm::vec4(ray.direction, 0.0f)));
+}
+
+void SceneNode::invTransformRay(Ray& ray) {
+	ray.origin = glm::vec3(trans * glm::vec4(ray.origin, 1.0f));
+	ray.direction = glm::normalize(glm::vec3(trans * glm::vec4(ray.direction, 0.0f)));
+}
+
+bool SceneNode::intersect(Ray& ray, Intersection& isect){
+	transformRay(ray);
+
+    bool hit = false;
+    for (SceneNode* child : children) {
+        hit |= child->intersect(ray, isect);
+    }
+    
+	invTransformRay(ray);
+    return hit;
+}

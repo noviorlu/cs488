@@ -13,13 +13,7 @@ public:
 
 	void setMaterial( Material *material );
 
-	bool intersect(const Ray& ray, Intersection& isect) override{
-		if(m_primitive->intersect(ray, isect)){
-			isect.material = m_material;
-			return true;
-		}
-		return false;
-	}
+	bool intersect(Ray& ray, Intersection& isect) override;
 
 	Material *m_material;
 	Primitive *m_primitive;

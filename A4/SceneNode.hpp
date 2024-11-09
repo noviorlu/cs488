@@ -41,13 +41,10 @@ public:
     void scale(const glm::vec3& amount);
     void translate(const glm::vec3& amount);
 
-    virtual bool intersect(const Ray& ray, Intersection& isect){
-        bool hit = false;
-        for (SceneNode* child : children) {
-            hit |= child->intersect(ray, isect);
-        }
-        return hit;
-    }
+    void transformRay(Ray& ray);
+    void invTransformRay(Ray& ray);
+
+    virtual bool intersect(Ray& ray, Intersection& isect);
 
 	friend std::ostream & operator << (std::ostream & os, const SceneNode & node);
 

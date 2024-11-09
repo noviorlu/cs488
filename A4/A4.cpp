@@ -11,11 +11,9 @@ glm::vec3 TraceRay(
 	const glm::vec3 &ambient,
 	const std::list<Light *> &lights
 ){
+	Ray localRay(ray);
 	Intersection intersection;
-	intersection.t = std::numeric_limits<float>::infinity();
-	intersection.material = nullptr;
-
-	if (!root->intersect(ray, intersection)) {
+	if (!root->intersect(localRay, intersection)) {
 		// Return background color if no intersection
 		return glm::vec3(0.0f);
 	}
@@ -29,7 +27,7 @@ glm::vec3 TraceRay(
 	// Iterate over each light source
 	for (const auto& light : lights) {
 		glm::vec3 lightDir = glm::normalize(light->position - intersection.position);
-		float lightDistance = glm::length(light->position - intersection.position) - 1e-4f;
+		float lightDistance = glm::length(light->position - intersection.position);
 
 		// Create shadow ray
 		Ray shadowRay;
@@ -47,10 +45,10 @@ glm::vec3 TraceRay(
 			float diff = std::max(glm::dot(intersection.normal, lightDir), 0.0f);
 			color += phongMaterial->m_kd * diff * light->colour;
 
-			// Calculate specular component
+			// Calculate specular component using half-vector
 			glm::vec3 viewDir = glm::normalize(ray.origin - intersection.position);
-			glm::vec3 reflectDir = glm::reflect(-lightDir, intersection.normal);
-			float spec = pow(std::max(glm::dot(viewDir, reflectDir), 0.0f), phongMaterial->m_shininess);
+			glm::vec3 halfDir = glm::normalize(lightDir + viewDir);
+			float spec = pow(std::max(glm::dot(intersection.normal, halfDir), 0.0f), phongMaterial->m_shininess);
 			color += phongMaterial->m_ks * spec * light->colour;
 		}
 	}

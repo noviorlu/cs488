@@ -9,12 +9,11 @@
 #include "Image.hpp"
 
 glm::vec3 TraceRay(
-	SceneNode* root, 
-	const Ray& ray, 
-	int depth, 
-	const glm::vec3 & ambient,
-	const std::list<Light *> & lights
-);
+    SceneNode *root,
+    const Ray &ray,
+    int depth,
+    const glm::vec3 &ambient,
+    const std::list<Light *> &lights);
 
 void A4_Render(
 		// What to render

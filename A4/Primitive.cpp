@@ -47,7 +47,7 @@ bool NonhierSphere::intersect(const Ray& ray, Intersection& isect)
   }
 
   // Check if this intersection is closer than any previous one
-  if (t0 < isect.t) {
+  if (t0 < isect.t && t0 > 0) {
     // Update the intersection record
     isect.t = t0;
     isect.position = ray.origin + t0 * ray.direction;
@@ -80,7 +80,7 @@ bool NonhierBox::intersect(const Ray& ray, Intersection& isect)
   }
 
   // Check if this intersection is closer than any previous one
-  if (tmin < isect.t) {
+  if (tmin < isect.t && tmin > 0) {
     // Update the intersection record
     isect.t = tmin;
     isect.position = ray.origin + tmin * ray.direction;
