@@ -18,6 +18,9 @@ glm::vec3 TraceRay(
 		return glm::vec3(0.0f);
 	}
 
+	// [DEBUG] Normal Color
+	// return 0.5f * intersection.normal + 0.5f;
+
 	// static cast material to PhongMaterial
 	PhongMaterial *phongMaterial = static_cast<PhongMaterial *>(intersection.material);
 
@@ -39,7 +42,6 @@ glm::vec3 TraceRay(
 		// Check if the shadow ray intersects any object
 		Intersection shadowIsect;
 		bool inShadow = root->intersect(shadowRay, shadowIsect);
-
 		if (!inShadow) {
 			// Calculate diffuse component
 			float diff = std::max(glm::dot(intersection.normal, lightDir), 0.0f);

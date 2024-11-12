@@ -16,7 +16,12 @@ Mesh::Mesh( const std::string& fname )
 	double vx, vy, vz;
 	size_t s1, s2, s3;
 
-	std::ifstream ifs( fname.c_str() );
+    std::string name = "Assets/" + fname;
+	std::ifstream ifs( name.c_str() );
+    if (!ifs.is_open()) {
+        std::cerr << "Failed to open file: " << name << std::endl;
+    }
+
 	while( ifs >> code ) {
 		if( code == "v" ) {
 			ifs >> vx >> vy >> vz;
@@ -26,8 +31,6 @@ Mesh::Mesh( const std::string& fname )
 			m_faces.push_back( Triangle( s1 - 1, s2 - 1, s3 - 1 ) );
 		}
 	}
-
-	std::cout << *this << std::endl;
 }
 
 std::ostream& operator<<(std::ostream& out, const Mesh& mesh)
@@ -35,14 +38,14 @@ std::ostream& operator<<(std::ostream& out, const Mesh& mesh)
     out << "Mesh {" << std::endl;
 
     // Print vertices
-    out << "  Vertices:" << std::endl;
+    out << "  Vertices:" << mesh.m_vertices.size() << std::endl;
     for (size_t idx = 0; idx < mesh.m_vertices.size(); ++idx) {
         const glm::vec3& v = mesh.m_vertices[idx];
-        out << "    " << idx << ": " << glm::to_string(v) << std::endl;
+        out << "    " << idx << ": " << v.r << "," << v.g << "," << v.b << std::endl;
     }
 
     // Print faces (triangles)
-    out << "  Faces (Triangles):" << std::endl;
+    out << "  Faces (Triangles):" << mesh.m_faces.size() << std::endl;
     for (size_t idx = 0; idx < mesh.m_faces.size(); ++idx) {
         const Triangle& tri = mesh.m_faces[idx];
         out << "    " << idx << ": (" << tri.v1 << ", " << tri.v2 << ", " << tri.v3 << ")" << std::endl;
@@ -55,37 +58,42 @@ std::ostream& operator<<(std::ostream& out, const Mesh& mesh)
 
 bool Mesh::intersect(const Ray& ray, Intersection& isect) {
     bool hit = false;
+    const float EPSILON = 1e-6f;
 
     for (const Triangle& tri : m_faces) {
+        // Get vertices of the triangle
         const glm::vec3& v0 = m_vertices[tri.v1];
         const glm::vec3& v1 = m_vertices[tri.v2];
         const glm::vec3& v2 = m_vertices[tri.v3];
 
+        // Compute edges and the normal
         glm::vec3 edge1 = v1 - v0;
         glm::vec3 edge2 = v2 - v0;
-        glm::vec3 h = glm::cross(ray.direction, edge2);
-        float a = glm::dot(edge1, h);
+        glm::vec3 pvec = glm::cross(ray.direction, edge2);
+        float det = glm::dot(edge1, pvec);
 
-        if (std::abs(a) < 1e-6) continue;
+        // Use back-face culling if needed; skip triangles facing away
+        if (det < EPSILON) continue;
 
-        float f = 1.0f / a;
-        glm::vec3 s = ray.origin - v0;
-        float u = f * glm::dot(s, h);
+        // Inverse determinant for efficient division
+        float invDet = 1.0f / det;
 
+        // Calculate u parameter and test bounds
+        glm::vec3 tvec = ray.origin - v0;
+        float u = glm::dot(tvec, pvec) * invDet;
         if (u < 0.0f || u > 1.0f) continue;
 
-        glm::vec3 q = glm::cross(s, edge1);
-        float v = f * glm::dot(ray.direction, q);
-
+        // Calculate v parameter and test bounds
+        glm::vec3 qvec = glm::cross(tvec, edge1);
+        float v = glm::dot(ray.direction, qvec) * invDet;
         if (v < 0.0f || u + v > 1.0f) continue;
 
-        float t = f * glm::dot(edge2, q);
-
+        // Calculate t, check if within bounds, and if it's the closest intersection
+        float t = glm::dot(edge2, qvec) * invDet;
         if (t > ray.mint && t < ray.maxt && t < isect.t) {
             isect.t = t;
             isect.position = ray.origin + t * ray.direction;
             isect.normal = glm::normalize(glm::cross(edge1, edge2));
-
             hit = true;
         }
     }
