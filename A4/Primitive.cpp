@@ -23,7 +23,7 @@ NonhierBox::~NonhierBox()
 {
 }
 
-bool NonhierSphere::intersect(const Ray& ray, Intersection& isect)
+bool NonhierSphere::intersect(Ray& ray, Intersection& isect)
 {
   glm::vec3 L = m_pos - ray.origin;
   float tca = glm::dot(L, ray.direction);
@@ -47,9 +47,9 @@ bool NonhierSphere::intersect(const Ray& ray, Intersection& isect)
   }
 
   // Check if this intersection is closer than any previous one
-  if (t0 < isect.t && t0 > 0) {
+  if (t0 < ray.maxt && t0 > ray.mint) {
     // Update the intersection record
-    isect.t = t0;
+    ray.maxt = t0;
     isect.position = ray.origin + t0 * ray.direction;
     isect.normal = glm::normalize(isect.position - m_pos);
     return true;
@@ -59,7 +59,7 @@ bool NonhierSphere::intersect(const Ray& ray, Intersection& isect)
 }
 
 
-bool NonhierBox::intersect(const Ray& ray, Intersection& isect)
+bool NonhierBox::intersect(Ray& ray, Intersection& isect)
 {
   glm::vec3 p = m_pos - ray.origin;
   glm::vec3 q = p + glm::vec3(m_size, m_size, m_size);
@@ -80,9 +80,9 @@ bool NonhierBox::intersect(const Ray& ray, Intersection& isect)
   }
 
   // Check if this intersection is closer than any previous one
-  if (tmin < isect.t && tmin > 0) {
+  if (tmin < ray.maxt && tmin > ray.mint) {
     // Update the intersection record
-    isect.t = tmin;
+    ray.maxt = tmin;
     isect.position = ray.origin + tmin * ray.direction;
 
     // Determine the normal based on the intersection position

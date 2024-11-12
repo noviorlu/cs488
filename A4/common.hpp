@@ -23,8 +23,7 @@ struct Ray {
 struct Intersection {
 	glm::vec3 position;
 	glm::vec3 normal;
-	float t;
 	Material *material;
 
-	Intersection() : t(std::numeric_limits<float>::infinity()), material(nullptr) {}
+	Intersection() : material(nullptr) {}
 };

@@ -146,35 +146,25 @@ void printMatrix(const glm::mat4& matrix) {
     std::cout << std::endl;
 }
 
-void SceneNode::transformRay(Ray& ray) {
-    ray.origin = glm::vec3(invtrans * glm::vec4(ray.origin, 1.0f));
-    glm::vec4 transformedDirection = invtrans * glm::vec4(ray.direction, 0.0f);
-    ray.direction = glm::normalize(glm::vec3(transformedDirection));
-    
+void SceneNode::transformRay(Ray& ray, const glm::mat4& transMatrix) {
+    ray.origin = glm::vec3(transMatrix * glm::vec4(ray.origin, 1.0f));
+
+    glm::vec4 transformedDirection = transMatrix * glm::vec4(ray.direction, 0.0f);
     float directionScale = glm::length(glm::vec3(transformedDirection));
+    ray.direction = glm::normalize(glm::vec3(transformedDirection));
+
     ray.mint *= directionScale;
     ray.maxt *= directionScale;
 }
-
-void SceneNode::invTransformRay(Ray& ray) {
-    ray.origin = glm::vec3(trans * glm::vec4(ray.origin, 1.0f));
-    glm::vec4 transformedDirection = trans * glm::vec4(ray.direction, 0.0f);
-    ray.direction = glm::normalize(glm::vec3(transformedDirection));
-    
-    float directionScale = glm::length(glm::vec3(transformedDirection));
-    ray.mint *= directionScale;
-    ray.maxt *= directionScale;
-}
-
 
 bool SceneNode::intersect(Ray& ray, Intersection& isect){
-	// transformRay(ray);
+	transformRay(ray, invtrans);
 
     bool hit = false;
     for (SceneNode* child : children) {
         hit |= child->intersect(ray, isect);
     }
     
-	// invTransformRay(ray);
+	transformRay(ray, trans);
     return hit;
 }

@@ -8,7 +8,7 @@
 class Primitive {
 public:
   virtual ~Primitive();
-  virtual bool intersect(const Ray& ray, Intersection& isect){return false;}
+  virtual bool intersect(Ray& ray, Intersection& isect){return false;}
 };
 
 class Sphere : public Primitive {
@@ -29,7 +29,7 @@ public:
   }
   virtual ~NonhierSphere();
 
-  bool intersect(const Ray& ray, Intersection& isect) override;
+  bool intersect(Ray& ray, Intersection& isect) override;
 
 private:
   glm::vec3 m_pos;
@@ -45,7 +45,7 @@ public:
   
   virtual ~NonhierBox();
 
-  bool intersect(const Ray& ray, Intersection& isect) override;
+  bool intersect(Ray& ray, Intersection& isect) override;
 
 private:
   glm::vec3 m_pos;

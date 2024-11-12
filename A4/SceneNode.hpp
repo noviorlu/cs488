@@ -41,8 +41,7 @@ public:
     void scale(const glm::vec3& amount);
     void translate(const glm::vec3& amount);
 
-    void transformRay(Ray& ray);
-    void invTransformRay(Ray& ray);
+    void transformRay(Ray& ray, const glm::mat4& transMatrix);
 
     virtual bool intersect(Ray& ray, Intersection& isect);
 

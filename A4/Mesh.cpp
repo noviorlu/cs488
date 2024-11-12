@@ -56,7 +56,7 @@ std::ostream& operator<<(std::ostream& out, const Mesh& mesh)
 }
 
 
-bool Mesh::intersect(const Ray& ray, Intersection& isect) {
+bool Mesh::intersect(Ray& ray, Intersection& isect) {
     bool hit = false;
     const float EPSILON = 1e-6f;
 
@@ -90,8 +90,8 @@ bool Mesh::intersect(const Ray& ray, Intersection& isect) {
 
         // Calculate t, check if within bounds, and if it's the closest intersection
         float t = glm::dot(edge2, qvec) * invDet;
-        if (t > ray.mint && t < ray.maxt && t < isect.t) {
-            isect.t = t;
+        if (t < ray.maxt && t > ray.mint) {
+            ray.maxt = t;
             isect.position = ray.origin + t * ray.direction;
             isect.normal = glm::normalize(glm::cross(edge1, edge2));
             hit = true;

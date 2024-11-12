@@ -32,7 +32,7 @@ struct Triangle
 class Mesh : public Primitive {
 public:
   Mesh( const std::string& fname );
-	bool intersect(const Ray& ray, Intersection& isect) override;
+	bool intersect(Ray& ray, Intersection& isect) override;
 private:
 	std::vector<glm::vec3> m_vertices;
 	std::vector<Triangle> m_faces;
