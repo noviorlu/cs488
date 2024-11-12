@@ -29,11 +29,11 @@ void GeometryNode::setMaterial( Material *mat )
 }
 
 bool GeometryNode::intersect(Ray& ray, Intersection& isect){
-	transformRay(ray);
+	// transformRay(ray);
 	bool result = m_primitive->intersect(ray, isect);
 	if(result){
 		isect.material = m_material;
 	}
-	invTransformRay(ray);
+	// invTransformRay(ray);
 	return result;
 }
