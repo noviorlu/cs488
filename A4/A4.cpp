@@ -20,7 +20,7 @@ glm::vec3 TraceRay(
 	}
 
 	// [DEBUG] Normal Color
-	return 0.5f * intersection.normal + 0.5f;
+	// return 0.5f * intersection.normal + 0.5f;
 
 	PhongMaterial *phongMaterial = static_cast<PhongMaterial *>(intersection.material);
 	glm::vec3 color = ambient * phongMaterial->m_kd;

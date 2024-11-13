@@ -164,8 +164,8 @@ bool SceneNode::intersect(Ray& ray, Intersection& isect){
     
 	if(hit){
 		isect.position = glm::vec3(trans * glm::vec4(isect.position, 1.0f));
-		isect.normal = glm::normalize(glm::vec3(invtrans * glm::vec4(isect.normal, 0.0f)));
-	
+		glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(trans)));
+		isect.normal = glm::normalize(normalMatrix * isect.normal);
 		ray.maxt = transRay.maxt / directionScale;
 	}
 
