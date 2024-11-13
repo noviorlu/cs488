@@ -42,6 +42,6 @@ Example:
 
 ## Notes
 - **Compile Optimization**: Use `-O2` for better performance.
-- **Debugging**: "Epsilon" checks in intersections, optional bounding volume visualization with `#define RENDER_BOUNDING_VOLUMES`, check Macro `#define MSAA`
+- **Debugging**: "Epsilon" checks in intersections, optional bounding volume visualization with `#define RENDER_BOUNDING_VOLUMES`, check Macro `#define MSAA_SAMPLES` both in `common.hpp`
 
 Enjoy exploring ray tracing with this tool!

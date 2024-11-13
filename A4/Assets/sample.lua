@@ -70,6 +70,6 @@ light_color = {0.8, 0.8, 0.8}
 light_falloff = {1, 0, 0}
 
 gr.render(scene,
-          'cornell-box-cow.png', 512, 512,
+          'sample.png', 512, 512,
           {0, 0, 10}, {0, 0, -1}, {0, 1, 0}, 50,
           {0.2, 0.2, 0.2}, {gr.light(light_position, light_color, light_falloff)})

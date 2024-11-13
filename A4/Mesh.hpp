@@ -9,12 +9,8 @@
 
 #include <glm/glm.hpp>
 
+#include "common.hpp"
 #include "Primitive.hpp"
-
-// Use this #define to selectively compile your code to render the
-// bounding boxes around your mesh objects. Uncomment this option
-// to turn it on.
-#define RENDER_BOUNDING_VOLUMES
 
 class AABB {
 public:
