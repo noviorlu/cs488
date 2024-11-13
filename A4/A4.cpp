@@ -1,6 +1,7 @@
 // Termm--Fall 2024
 
 #include <glm/ext.hpp>
+#include <chrono>
 #include "PhongMaterial.hpp"
 #include "A4.hpp"
 
@@ -43,18 +44,18 @@ glm::vec3 TraceRay(
 		Intersection shadowIsect;
 		bool inShadow = root->intersect(shadowRay, shadowIsect);
 		if (!inShadow) {
-			float distance = glm::length(light->position - intersection.position);
-			float d2 = distance * distance;
-			float attenu1 = 150000 / d2;
-			float attenu2 = 200000 / d2;
+			// float distance = glm::length(light->position - intersection.position);
+			// float d2 = distance * distance;
+			// float attenu1 = 150000 / d2;
+			// float attenu2 = 200000 / d2;
 
 			float diff = std::max(glm::dot(intersection.normal, lightDir), 0.0f);
-			color += phongMaterial->m_kd * diff * light->colour * attenu1;
+			color += phongMaterial->m_kd * diff * light->colour;
 
 			glm::vec3 viewDir = glm::normalize(ray.origin - intersection.position);
 			glm::vec3 halfDir = glm::normalize(lightDir + viewDir);
 			float spec = pow(std::max(glm::dot(intersection.normal, halfDir), 0.0f), phongMaterial->m_shininess * 5.0f);
-			color += phongMaterial->m_ks * spec * light->colour * attenu2;
+			color += phongMaterial->m_ks * spec * light->colour;
 		}
 	}
 
@@ -112,6 +113,11 @@ void A4_Render(
 	double half_width = aspect_ratio * half_height;
 
 
+	// count renderer time
+	std::cout << "Rendering..." << std::endl;
+	auto start = std::chrono::high_resolution_clock::now();
+
+
 	for (uint y = 0; y < h; ++y)
 	{
 		for (uint x = 0; x < w; ++x)
@@ -140,4 +146,8 @@ void A4_Render(
 			image(x, y, 2) = color.b;
 		}
 	}
+
+	auto end = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double> elapsed = end - start;
+	std::cout << "Rendering time: " << elapsed.count() << "s" << std::endl;
 }
