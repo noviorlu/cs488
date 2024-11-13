@@ -5,7 +5,7 @@
 #include "PhongMaterial.hpp"
 #include "A4.hpp"
 
-#define MSAA_SAMPLES 4
+#define MSAA_SAMPLES 1
 
 glm::vec3 TraceRay(
 	SceneNode* root, 
