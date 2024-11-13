@@ -5,6 +5,8 @@
 #include "PhongMaterial.hpp"
 #include "A4.hpp"
 
+#define MSAA_SAMPLES 4
+
 glm::vec3 TraceRay(
 	SceneNode* root, 
 	const Ray& ray, 
@@ -111,29 +113,33 @@ void A4_Render(
 	auto start = std::chrono::high_resolution_clock::now();
 
 
-	for (uint y = 0; y < h; ++y)
-	{
-		for (uint x = 0; x < w; ++x)
-		{
-			// Convert pixel coordinate to normalized device coordinates
-			double u = (2.0 * ((x + 0.5) / double(w)) - 1.0) * half_width;
-			double v = (1.0 - 2.0 * ((y + 0.5) / double(h))) * half_height;
+	for (uint y = 0; y < h; ++y) {
+		for (uint x = 0; x < w; ++x) {
+			glm::vec3 color(0.0f);
+			for (int i = 0; i < MSAA_SAMPLES; ++i) {
+				double offset_x = (i % 2 + 0.5) / 2.0;
+				double offset_y = (i / 2 + 0.5) / 2.0;
 
-			// Generate primary ray
-			Ray primary_ray;
-			primary_ray.origin = eye;
-			primary_ray.direction = glm::normalize(u * u_dir + v * v_dir + w_dir);
-			primary_ray.mint = 0.0f;
-			primary_ray.maxt = std::numeric_limits<float>::infinity();
+				double u = (2.0 * ((x + offset_x) / double(w)) - 1.0) * half_width;
+				double v = (1.0 - 2.0 * ((y + offset_y) / double(h))) * half_height;
 
-			// Trace the ray to determine the color at this pixel
-			glm::vec3 color = TraceRay(root, primary_ray, 100, ambient, lights);
+				Ray primary_ray;
+				primary_ray.origin = eye;
+				primary_ray.direction = glm::normalize(u * u_dir + v * v_dir + w_dir);
+				primary_ray.mint = 0.0f;
+				primary_ray.maxt = std::numeric_limits<float>::infinity();
 
-			if(color == glm::vec3(0.0f)){
-				color = ((float)y/(float)h) * lights.front()->colour * 0.3f;
+				glm::vec3 sample_color = TraceRay(root, primary_ray, 100, ambient, lights);
+
+				if (sample_color == glm::vec3(0.0f)) {
+					sample_color = ((float)y / (float)h) * lights.front()->colour * 0.3f;
+				}
+
+				color += sample_color;
 			}
 
-			// Set pixel color in the image
+			color /= float(MSAA_SAMPLES);
+
 			image(x, y, 0) = color.r;
 			image(x, y, 1) = color.g;
 			image(x, y, 2) = color.b;
