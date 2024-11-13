@@ -29,11 +29,23 @@ void GeometryNode::setMaterial( Material *mat )
 }
 
 bool GeometryNode::intersect(Ray& ray, Intersection& isect){
-	transformRay(ray, invtrans);
-	bool result = m_primitive->intersect(ray, isect);
+	Ray transRay(ray);
+	
+	transRay.origin = glm::vec3(invtrans * glm::vec4(ray.origin, 1.0f));
+	glm::vec4 transformedDirection = invtrans * glm::vec4(ray.direction, 0.0f);
+	float directionScale = glm::length(glm::vec3(transformedDirection));
+	transRay.direction = glm::normalize(glm::vec3(transformedDirection));
+	transRay.maxt *= directionScale;
+	transRay.mint *= directionScale;
+
+	bool result = m_primitive->intersect(transRay, isect);
 	if(result){
 		isect.material = m_material;
+		isect.position = glm::vec3(trans * glm::vec4(isect.position, 1.0f));
+		isect.normal = glm::normalize(glm::vec3(invtrans * glm::vec4(isect.normal, 0.0f)));
+	
+		ray.maxt = transRay.maxt / directionScale;
 	}
-	transformRay(ray, trans);
+	
 	return result;
 }

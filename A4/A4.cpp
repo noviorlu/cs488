@@ -20,42 +20,35 @@ glm::vec3 TraceRay(
 	}
 
 	// [DEBUG] Normal Color
-	// return 0.5f * intersection.normal + 0.5f;
+	return 0.5f * intersection.normal + 0.5f;
 
-	// static cast material to PhongMaterial
 	PhongMaterial *phongMaterial = static_cast<PhongMaterial *>(intersection.material);
+	glm::vec3 color = ambient * phongMaterial->m_kd;
 
-	// Initial color, start with ambient component
-	glm::vec3 color = ambient;
-
-	// Iterate over each light source
 	for (const auto& light : lights) {
 		glm::vec3 lightDir = glm::normalize(light->position - intersection.position);
-		float lightDistance = glm::length(light->position - intersection.position);
+		float lightDistance = glm::length(light->position - intersection.position) - 1e-4f;
 
-		// Create shadow ray
 		Ray shadowRay;
-		shadowRay.origin = intersection.position + 1e-4f * lightDir; // Offset to avoid self-intersection
+		shadowRay.origin = intersection.position + 1e-4f * lightDir;
 		shadowRay.direction = lightDir;
 		shadowRay.mint = 0.0f;
 		shadowRay.maxt = lightDistance;
 
-		// Check if the shadow ray intersects any object
 		Intersection shadowIsect;
 		bool inShadow = root->intersect(shadowRay, shadowIsect);
+
 		if (!inShadow) {
-			// float distance = glm::length(light->position - intersection.position);
-			// float d2 = distance * distance;
-			// float attenu1 = 150000 / d2;
-			// float attenu2 = 200000 / d2;
+			float attenuation = 1.0f / (light->falloff[0] + light->falloff[1] * lightDistance + light->falloff[2] * lightDistance * lightDistance);
 
 			float diff = std::max(glm::dot(intersection.normal, lightDir), 0.0f);
-			color += phongMaterial->m_kd * diff * light->colour;
+			color += phongMaterial->m_kd * diff * light->colour * attenuation;
 
 			glm::vec3 viewDir = glm::normalize(ray.origin - intersection.position);
 			glm::vec3 halfDir = glm::normalize(lightDir + viewDir);
-			float spec = pow(std::max(glm::dot(intersection.normal, halfDir), 0.0f), phongMaterial->m_shininess * 5.0f);
-			color += phongMaterial->m_ks * spec * light->colour;
+
+			float spec = pow(std::max(glm::dot(intersection.normal, halfDir), 0.0f), phongMaterial->m_shininess);
+			color += phongMaterial->m_ks * spec * light->colour * attenuation;
 		}
 	}
 
