@@ -43,15 +43,18 @@ glm::vec3 TraceRay(
 		Intersection shadowIsect;
 		bool inShadow = root->intersect(shadowRay, shadowIsect);
 		if (!inShadow) {
-			// Calculate diffuse component
-			float diff = std::max(glm::dot(intersection.normal, lightDir), 0.0f);
-			color += phongMaterial->m_kd * diff * light->colour;
+			float distance = glm::length(light->position - intersection.position);
+			float d2 = distance * distance;
+			float attenu1 = 150000 / d2;
+			float attenu2 = 200000 / d2;
 
-			// Calculate specular component using half-vector
+			float diff = std::max(glm::dot(intersection.normal, lightDir), 0.0f);
+			color += phongMaterial->m_kd * diff * light->colour * attenu1;
+
 			glm::vec3 viewDir = glm::normalize(ray.origin - intersection.position);
 			glm::vec3 halfDir = glm::normalize(lightDir + viewDir);
-			float spec = pow(std::max(glm::dot(intersection.normal, halfDir), 0.0f), phongMaterial->m_shininess);
-			color += phongMaterial->m_ks * spec * light->colour;
+			float spec = pow(std::max(glm::dot(intersection.normal, halfDir), 0.0f), phongMaterial->m_shininess * 5.0f);
+			color += phongMaterial->m_ks * spec * light->colour * attenu2;
 		}
 	}
 
@@ -126,6 +129,10 @@ void A4_Render(
 
 			// Trace the ray to determine the color at this pixel
 			glm::vec3 color = TraceRay(root, primary_ray, 100, ambient, lights);
+
+			if(color == glm::vec3(0.0f)){
+				color = ((float)y/(float)h) * lights.front()->colour * 0.3f;
+			}
 
 			// Set pixel color in the image
 			image(x, y, 0) = color.r;

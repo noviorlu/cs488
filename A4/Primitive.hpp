@@ -8,17 +8,21 @@
 class Primitive {
 public:
   virtual ~Primitive();
-  virtual bool intersect(Ray& ray, Intersection& isect){return false;}
+  virtual bool intersect(Ray& ray, Intersection& isect) = 0;
 };
 
 class Sphere : public Primitive {
 public:
   virtual ~Sphere();
+
+  bool intersect(Ray& ray, Intersection& isect) override;
 };
 
 class Cube : public Primitive {
 public:
   virtual ~Cube();
+
+  bool intersect(Ray& ray, Intersection& isect) override;
 };
 
 class NonhierSphere : public Primitive {
